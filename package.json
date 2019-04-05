@@ -18,5 +18,5 @@
   "bin": {
     "bouncer": "bin/index.js"
   },
-  "author": "aslogd"
+  "author": "Gerard del Castillo <gerarddelcastillo@gmail.com> (https://github.com/aslogd)"
 }
