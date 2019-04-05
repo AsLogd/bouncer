@@ -22,7 +22,7 @@
   "scripts": {
     "prepare": "yarn run clean && yarn run build",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc index.ts --outDir bin && cp basic_validators_template.ts bin/basic_validator",
+    "build": "tsc index.ts --outDir bin && cp basic_validators_template.ts bin/basic_validator.ts",
     "start": "./bin/index.js",
     "clean": "rm -f *.js validators.* bin/*"
   },
