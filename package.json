@@ -3,17 +3,28 @@
   "version": "1.0.0",
   "main": "bin/index.js",
   "license": "MIT",
-  "dependencies": {
-    "typescript": "^3.4.1"
+  "dependencies": {},
+  "files": ["bin/*"],
+  "repository": {
+    "type" : "git",
+    "url" : "https://github.com/aslogd/bouncer.git"
+  },
+  "keywords": ["typescript", "runtime", "check", "boundary", "compiler"],
+  "homepage": "https://github.com/aslogd/bouncer",
+  "bugs":{
+    "url":"https://github.com/aslogd/bouncer/issues"
   },
   "description": "Automatic validator generation for serializable TypeScript interfaces using the Compiler API",
   "devDependencies": {
+    "typescript": "^3.4.1",
     "@types/node": "^11.13.0"
   },
   "scripts": {
+    "prepublish": "yarn run clean && yarn run build",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc index.ts --outDir bin",
-    "start": "./bin/index.js"
+    "build": "tsc index.ts --outDir bin && cp basic_validators.ts bin",
+    "start": "./bin/index.js",
+    "clean": "rm *.js validators.* bin/*"
   },
   "bin": {
     "bouncer": "bin/index.js"
