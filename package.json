@@ -24,7 +24,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc index.ts --outDir bin && cp basic_validators.ts bin",
     "start": "./bin/index.js",
-    "clean": "rm *.js validators.* bin/*"
+    "clean": "rm -f *.js validators.* bin/*"
   },
   "bin": {
     "bouncer": "bin/index.js"
