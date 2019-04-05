@@ -125,7 +125,7 @@ export function makeBoundaryValidators(files: string[], outputPath: string) {
 			const aux = file.fileName.split("/")
 			const moduleName = aux.slice(-1)[0].split(".")[0]
 			const op = aux.slice(0, -1).join("/")
-
+			const p = path.relative(outputPath, op) || '.'
 			importNodes.push(
 				ts.createImportDeclaration(
 					undefined,
@@ -140,7 +140,7 @@ export function makeBoundaryValidators(files: string[], outputPath: string) {
 						)
 					),
 					ts.createStringLiteral(
-						path.relative(outputPath, op) + "/" + moduleName
+						p + "/" + moduleName
 					)
 				)
 			)
@@ -166,7 +166,7 @@ export function createFile(nodes: ts.Node[], output: string) {
 		resultFile
 	);
 	//TODO: refactor
-	const pre = printer.printFile(parseFile("basic_validators.ts"))
+	const pre = printer.printFile(parseFile(__dirname+"/basic_validators.ts"))
 	fs.writeFileSync(output+"/validators.ts", pre+result)
 	console.log("outputting in: " + output+"/validators.ts")
 }
