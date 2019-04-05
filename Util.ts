@@ -1,7 +1,8 @@
 import * as fs from "fs";
+import * as path from "path"
 import * as ts from "typescript"
 
-// Interfaces with this tag in JSDocs will be 
+// Interfaces with this tag in JSDocs will be
 // considered when creating boundary validators
 const BOUNDARY_JSDOC_TAG = "@boundary"
 
@@ -21,7 +22,7 @@ export function mapFiles(fileNames: string[], f: (sourceFile: ts.SourceFile) => 
 	return fileNames.map(fn => f(parseFile(fn)))
 }
 
-/** 
+/**
  * Given an interface I, creates a validator declaration that checks
  * if a given object implements I in execution time
  */
@@ -69,7 +70,7 @@ function makeValidator(inode: ts.InterfaceDeclaration, checker: ts.TypeChecker):
 	const returnType = ts.createTypePredicateNode(paramName, interfaceType)
 
 	return ts.createFunctionDeclaration(
-		/*decorators*/ 
+		/*decorators*/
 		undefined,
 		/*modifiers*/
 		[ts.createToken(ts.SyntaxKind.ExportKeyword)],
@@ -94,7 +95,7 @@ function makeValidator(inode: ts.InterfaceDeclaration, checker: ts.TypeChecker):
  */
 function isBoundaryInterfaceDeclaration(statement: ts.Statement): statement is ts.InterfaceDeclaration {
 	return ts.isInterfaceDeclaration(statement)
-		&& ts.getJSDocTags(statement).some(s => 
+		&& ts.getJSDocTags(statement).some(s =>
 			s.getText() === BOUNDARY_JSDOC_TAG
 		)
 }
@@ -102,7 +103,7 @@ function isBoundaryInterfaceDeclaration(statement: ts.Statement): statement is t
 /**
  * Creates validators for the boundary interfaces found in 'file'
  */
-export function makeBoundaryValidators(files: string[]) {
+export function makeBoundaryValidators(files: string[], outputPath: string) {
 	// Build a program using the set of root file names in fileNames
 	let program = ts.createProgram(files, {});
 
@@ -121,20 +122,26 @@ export function makeBoundaryValidators(files: string[]) {
 			}
 		}
 		if (imports.length) {
+			const aux = file.fileName.split("/")
+			const moduleName = aux.slice(-1)[0].split(".")[0]
+			const op = aux.slice(0, -1).join("/")
+
 			importNodes.push(
 				ts.createImportDeclaration(
 					undefined,
 					undefined,
 					ts.createImportClause(
-						undefined, 
+						undefined,
 						ts.createNamedImports(
 							imports.map(i => ts.createImportSpecifier(
-								undefined, 
+								undefined,
 								i
 							))
 						)
 					),
-					ts.createStringLiteral("./"+file.fileName.split(".")[0])
+					ts.createStringLiteral(
+						path.relative(outputPath, op) + "/" + moduleName
+					)
 				)
 			)
 		}
@@ -142,7 +149,7 @@ export function makeBoundaryValidators(files: string[]) {
 	return importNodes.concat(nodes)
 }
 
-export function createFile(nodes: ts.Node[]) {
+export function createFile(nodes: ts.Node[], output: string) {
 	const resultFile = ts.createSourceFile(
 		"someFileName.ts",
 		"",
@@ -160,7 +167,8 @@ export function createFile(nodes: ts.Node[]) {
 	);
 	//TODO: refactor
 	const pre = printer.printFile(parseFile("basic_validators.ts"))
-	fs.writeFileSync("validators.ts", pre+result)
+	fs.writeFileSync(output+"/validators.ts", pre+result)
+	console.log("outputting in: " + output+"/validators.ts")
 }
 
 /* PRINT */
