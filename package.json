@@ -1,0 +1,17 @@
+{
+  "name": "bouncer",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "typescript": "^3.4.1"
+  },
+  "description": "Automatic validator generation for serializable TypeScript interfaces using the Compiler API",
+  "devDependencies": {
+    "@types/node": "^11.13.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "aslogd"
+}
