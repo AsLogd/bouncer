@@ -10,3 +10,6 @@ export function isValidboolean(data: any): data is boolean {
 export function isValidany(data: any): data is boolean {
 	return typeof data !== "undefined";
 }
+export function isValidnull(data: any): data is boolean {
+	return data === null;
+}
