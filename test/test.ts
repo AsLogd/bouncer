@@ -38,3 +38,8 @@ assert(validators.isValidD(JSON.parse(c)), "Valid interface is not true (interfa
 
 c = '{"b": '+c2+', "d": '+cd+'}'
 assert(validators.isValidE(JSON.parse(c)), "Valid interface is not true (multiple nested interfaces)")
+
+c = '{}'
+assert(validators.isValidF(JSON.parse(c)), "Valid interface is not true (empty object with question members)")
+
+assert(validators.isValidF(undefined) === false, "Invalid interface is true (undefined)")

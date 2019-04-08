@@ -38,3 +38,11 @@ export interface E {
 	b: B,
 	d: D
 }
+
+/**
+ * @boundary
+ */
+export interface F {
+	str?: string,
+	num?: number
+}
