@@ -39,6 +39,11 @@ function makeValidator(inode: ts.InterfaceDeclaration, checker: ts.TypeChecker):
 		/*type*/ ts.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword)
 	);
 
+	let checkUndefined: ts.Expression = ts.createStrictInequality(
+		ts.createTypeOf(paramName),
+		ts.createStringLiteral("undefined")
+	)
+
 	const memberValidatorCalls: ts.Expression[] = inode.members.map(m => {
 		const prop = m as ts.PropertySignature
 		const validatorName = ts.createIdentifier("isValid"+prop.type.getText())
@@ -58,6 +63,8 @@ function makeValidator(inode: ts.InterfaceDeclaration, checker: ts.TypeChecker):
 
 		return validatorCall
 	})
+
+	memberValidatorCalls.unshift(checkUndefined)
 
 	const statements = [ts.createReturn(
 		memberValidatorCalls.reduce(ts.createLogicalAnd)
