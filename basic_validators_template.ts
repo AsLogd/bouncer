@@ -7,3 +7,6 @@ export function isValidnumber(data: any): data is number {
 export function isValidboolean(data: any): data is boolean {
 	return typeof data === "boolean";
 }
+export function isValidany(data: any): data is boolean {
+	return typeof data !== "undefined";
+}
