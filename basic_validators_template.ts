@@ -7,3 +7,12 @@ export function isValidnumber(data: any): data is number {
 export function isValidboolean(data: any): data is boolean {
 	return typeof data === "boolean";
 }
+export function isValidany(data: any): data is boolean {
+	return typeof data !== "undefined";
+}
+export function isValidnull(data: any): data is boolean {
+	return data === null;
+}
+export function isValidEnum<T>(e: T, data: any): data is keyof T {
+	return data in e || Object.values(e).includes(data)
+}

@@ -17,11 +17,10 @@ if (outputIndex > -1) {
 // Create code file containing the basic validators
 // and the dynamically generated validators from
 // the input files
+
 Util.createFile(
 	Util.makeBoundaryValidators(fileNames, output),
 	output
 )
 
 //Util.mapFiles(fileNames, Util.printAST)
-
-//Util.printAST(Util.parseFile("basic_validators.ts"))

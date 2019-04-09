@@ -26,7 +26,7 @@ export function mapFiles(fileNames: string[], f: (sourceFile: ts.SourceFile) => 
  * Given an interface I, creates a validator declaration that checks
  * if a given object implements I in execution time
  */
-function makeValidator(inode: ts.InterfaceDeclaration, checker: ts.TypeChecker): ts.FunctionDeclaration {
+function makeInterfaceValidator(inode: ts.InterfaceDeclaration, checker: ts.TypeChecker): ts.FunctionDeclaration {
 	const name = inode.name.getText()
 
 	const paramName = ts.createIdentifier("data");
@@ -39,11 +39,34 @@ function makeValidator(inode: ts.InterfaceDeclaration, checker: ts.TypeChecker):
 		/*type*/ ts.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword)
 	);
 
+	let checkUndefined: ts.Expression = ts.createStrictInequality(
+		ts.createTypeOf(paramName),
+		ts.createStringLiteral("undefined")
+	)
+
 	const memberValidatorCalls: ts.Expression[] = inode.members.map(m => {
 		const prop = m as ts.PropertySignature
-		const validatorName = ts.createIdentifier("isValid"+prop.type.getText())
 		const memberAccess = ts.createPropertyAccess(paramName, m.name.getText())
-		const validatorCall = ts.createCall(validatorName, undefined, [memberAccess])
+		const type = checker.getTypeAtLocation(prop.type)
+		let validatorName, validatorCall
+		if (type.symbol
+			&& type.symbol.valueDeclaration
+			&& ts.isEnumDeclaration(type.symbol.valueDeclaration))
+		{
+			validatorName = ts.createIdentifier("isValidEnum")
+			const enumId = ts.createIdentifier(type.symbol.name)
+			validatorCall = ts.createCall(
+				validatorName,
+				[ts.createTypeQueryNode(enumId)],
+				[enumId, memberAccess]
+			)
+		}
+		else
+		{
+			validatorName = ts.createIdentifier("isValid"+prop.type.getText())
+			validatorCall = ts.createCall(validatorName, undefined, [memberAccess])
+		}
+
 		if(prop.questionToken)
 		{
 			// Can't find a way to compare with undefined keyword
@@ -58,6 +81,8 @@ function makeValidator(inode: ts.InterfaceDeclaration, checker: ts.TypeChecker):
 
 		return validatorCall
 	})
+
+	memberValidatorCalls.unshift(checkUndefined)
 
 	const statements = [ts.createReturn(
 		memberValidatorCalls.reduce(ts.createLogicalAnd)
@@ -93,9 +118,8 @@ function makeValidator(inode: ts.InterfaceDeclaration, checker: ts.TypeChecker):
  * Checks whether the statement is an interface declaration
  * tagged with the boundary tag
  */
-function isBoundaryInterfaceDeclaration(statement: ts.Statement): statement is ts.InterfaceDeclaration {
-	return ts.isInterfaceDeclaration(statement)
-		&& ts.getJSDocTags(statement).some(s =>
+function isBoundary(statement: ts.Statement): statement is ts.InterfaceDeclaration {
+	return ts.getJSDocTags(statement).some(s =>
 			s.getText() === BOUNDARY_JSDOC_TAG
 		)
 }
@@ -114,10 +138,15 @@ export function makeBoundaryValidators(files: string[], outputPath: string) {
 	for (let file of program.getSourceFiles()) {
 		let imports = []
 		for (let statement of file.statements) {
-			if (isBoundaryInterfaceDeclaration(statement)) {
+			if (ts.isEnumDeclaration(statement)
+				&& isBoundary(statement)) {
+				imports.push(statement.name)
+			}
+			if (ts.isInterfaceDeclaration(statement)
+				&& isBoundary(statement)) {
 				imports.push(statement.name)
 				nodes.push(
-					makeValidator(statement, checker)
+					makeInterfaceValidator(statement, checker)
 				)
 			}
 		}
