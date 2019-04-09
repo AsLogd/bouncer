@@ -16,3 +16,8 @@ export function isValidnull(data: any): data is boolean {
 export function isValidEnum<T>(e: T, data: any): data is keyof T {
 	return data in e || Object.values(e).includes(data)
 }
+export function isValidEnumArray<T>(e: T): (data: any) => data is keyof T {
+	return (data: any): data is keyof T => {
+		return data in e || Object.values(e).includes(data)
+	}
+}

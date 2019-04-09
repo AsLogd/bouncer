@@ -102,3 +102,10 @@ export interface I {
 	g2: GG2,
 	g3: GG3
 }
+
+/**
+ * @boundary
+ */
+export interface J {
+	a: B[]
+}

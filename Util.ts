@@ -43,28 +43,69 @@ function makeInterfaceValidator(inode: ts.InterfaceDeclaration, checker: ts.Type
 		ts.createTypeOf(paramName),
 		ts.createStringLiteral("undefined")
 	)
-
+	/*
+	console.log("=========Interface:==========")
+	console.log(name)
+	*/
 	const memberValidatorCalls: ts.Expression[] = inode.members.map(m => {
 		const prop = m as ts.PropertySignature
 		const memberAccess = ts.createPropertyAccess(paramName, m.name.getText())
 		const type = checker.getTypeAtLocation(prop.type)
-		let validatorName, validatorCall
-		if (type.symbol
-			&& type.symbol.valueDeclaration
-			&& ts.isEnumDeclaration(type.symbol.valueDeclaration))
-		{
-			validatorName = ts.createIdentifier("isValidEnum")
-			const enumId = ts.createIdentifier(type.symbol.name)
-			validatorCall = ts.createCall(
-				validatorName,
-				[ts.createTypeQueryNode(enumId)],
-				[enumId, memberAccess]
-			)
+		const nodeType = checker.typeToTypeNode(type)
+		/*
+		console.log("=========member:==========")
+		console.log(ts.SyntaxKind[prop.kind])
+		console.log(prop)
+		if(type.symbol){
+			console.log("===symbol")
+			console.log(type.symbol)
+			console.log("===isArray")
+			console.log(ts.isArrayTypeNode(nodeType))
+
 		}
-		else
-		{
+		*/
+		let validatorName, validatorCall
+		if (type.symbol && type.symbol.valueDeclaration && ts.isEnumDeclaration(type.symbol.valueDeclaration)) {
+			const enumId = ts.createIdentifier(type.symbol.name)
+			if (ts.isArrayTypeNode(nodeType)) {
+				validatorName = ts.createIdentifier("isValidEnumArray")
+				const everyName = ts.createIdentifier("every");
+				const everyValidator = ts.createPropertyAccess(memberAccess, everyName)
+				const validatorIncomplete = ts.createCall(
+					validatorName,
+					[ts.createTypeQueryNode(enumId)],
+					[enumId]
+				)
+				validatorCall = ts.createCall(
+					everyValidator,
+					[],
+					[validatorIncomplete]
+				)
+			}
+			else {
+				validatorName = ts.createIdentifier("isValidEnum")
+				validatorCall = ts.createCall(
+					validatorName,
+					[ts.createTypeQueryNode(enumId)],
+					[enumId, memberAccess]
+				)
+			}
+		} else {
 			validatorName = ts.createIdentifier("isValid"+prop.type.getText())
-			validatorCall = ts.createCall(validatorName, undefined, [memberAccess])
+			if (ts.isArrayTypeNode(nodeType)) {
+				// TODO: do properly
+				validatorName = ts.createIdentifier("isValid"+prop.type.getText().slice(0,-2))
+				const everyName = ts.createIdentifier("every");
+				const everyValidator = ts.createPropertyAccess(memberAccess, everyName)
+				validatorCall = ts.createCall(
+					everyValidator,
+					[],
+					[validatorName]
+				)
+			}
+			else {
+				validatorCall = ts.createCall(validatorName, undefined, [memberAccess])
+			}
 		}
 
 		if(prop.questionToken)

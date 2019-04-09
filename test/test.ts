@@ -80,3 +80,9 @@ assert(validators.isValidEnum<typeof input.GG3>(input.GG3, 'I')  === false, "Inv
 
 c = '{"g": "A", "g2": "F", "g3": "E"}'
 assert(validators.isValidH(JSON.parse(c)), "Valid enum is invalid (multiple enum members)")
+
+c = '{"a":[]}'
+assert(validators.isValidJ(JSON.parse(c)), "Valid enum is invalid (empty array)")
+
+c = '{"a":[{"str": "a"}, {"str":"b", "a": 2}]}'
+assert(validators.isValidJ(JSON.parse(c)), "Valid enum is invalid (array)")
