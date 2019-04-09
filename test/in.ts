@@ -63,3 +63,42 @@ export enum G {
 export interface H {
 	g: G
 }
+
+/**
+ * @boundary
+ */
+export enum GG {
+	A=4,
+	B,
+	C,
+	D
+}
+
+/**
+ * @boundary
+ */
+export enum GG2 {
+	A="E",
+	B="F",
+	C="G",
+	D="H"
+}
+
+/**
+ * @boundary
+ */
+export enum GG3 {
+	A="B",
+	B="C",
+	C="D",
+	D="E"
+}
+
+/**
+ * @boundary
+ */
+export interface I {
+	g: GG,
+	g2: GG2,
+	g3: GG3
+}

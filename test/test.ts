@@ -52,3 +52,31 @@ assert(validators.isValidEnum<typeof input.G>(input.G, 'A'), "Valid enum is inva
 assert(validators.isValidEnum<typeof input.G>(input.G, '10') === false, "Invalid enum is valid (string)")
 assert(validators.isValidEnum<typeof input.G>(input.G, 10) === false, "Invalid enum is valid (num)")
 assert(validators.isValidEnum<typeof input.G>(input.G, 'Z') === false, "Invalid enum is valid (key)")
+
+c = '{"g": 1}'
+assert(validators.isValidH(JSON.parse(c)), "Valid enum is invalid (enum member)")
+
+assert(validators.isValidEnum<typeof input.GG>(input.GG, '5'), "Valid enum(with constructors) is invalid (string)")
+assert(validators.isValidEnum<typeof input.GG>(input.GG, 5), "Valid enum(with constructors) is invalid (num)")
+assert(validators.isValidEnum<typeof input.GG>(input.GG, 'A'), "Valid enum(with constructors) is invalid (key)")
+
+assert(validators.isValidEnum<typeof input.GG>(input.GG, '3') === false, "Invalid enum(with constructors) is valid (string)")
+assert(validators.isValidEnum<typeof input.GG>(input.GG, 2)  === false, "Invalid enum(with constructors) is valid (num)")
+assert(validators.isValidEnum<typeof input.GG>(input.GG, 'E')  === false, "Invalid enum(with constructors) is valid (key)")
+
+assert(validators.isValidEnum<typeof input.GG2>(input.GG2, 'E'), "Valid enum(with constructors) is invalid (string)")
+assert(validators.isValidEnum<typeof input.GG2>(input.GG2, 'A'), "Valid enum(with constructors) is invalid (key)")
+
+assert(validators.isValidEnum<typeof input.GG2>(input.GG2, '3') === false, "Invalid enum(with constructors) is valid (string)")
+assert(validators.isValidEnum<typeof input.GG2>(input.GG2, 2)  === false, "Invalid enum(with constructors) is valid (num)")
+assert(validators.isValidEnum<typeof input.GG2>(input.GG2, 'I')  === false, "Invalid enum(with constructors) is valid (key)")
+
+assert(validators.isValidEnum<typeof input.GG3>(input.GG3, 'B'), "Valid enum(with constructors) is invalid (string)")
+assert(validators.isValidEnum<typeof input.GG3>(input.GG3, 'C'), "Valid enum(with constructors) is invalid (key)")
+
+assert(validators.isValidEnum<typeof input.GG3>(input.GG3, '3') === false, "Invalid enum(with constructors) is valid (string)")
+assert(validators.isValidEnum<typeof input.GG3>(input.GG3, 2)  === false, "Invalid enum(with constructors) is valid (num)")
+assert(validators.isValidEnum<typeof input.GG3>(input.GG3, 'I')  === false, "Invalid enum(with constructors) is valid (key)")
+
+c = '{"g": "A", "g2": "F", "g3": "E"}'
+assert(validators.isValidH(JSON.parse(c)), "Valid enum is invalid (multiple enum members)")

@@ -16,7 +16,7 @@ export function isValidnull(data: any): data is boolean {
 export function isValidEnum<T>(e: T, data: any): data is keyof T {
     return data in e || Object.values(e).includes(data);
 }
-import { A, B, D, E, F, G, H } from "./in";
+import { A, B, D, E, F, G, H, GG, GG2, GG3, I } from "./in";
 export function isValidA(data: any): data is A {
     return typeof data !== "undefined" && isValidstring(data.str) && isValidnumber(data.num) && isValidboolean(data.bool) && isValidany(data.a);
 }
@@ -34,4 +34,7 @@ export function isValidF(data: any): data is F {
 }
 export function isValidH(data: any): data is H {
     return typeof data !== "undefined" && isValidEnum<typeof G>(G, data.g);
+}
+export function isValidI(data: any): data is I {
+    return typeof data !== "undefined" && isValidEnum<typeof GG>(GG, data.g) && isValidEnum<typeof GG2>(GG2, data.g2) && isValidEnum<typeof GG3>(GG3, data.g3);
 }
