@@ -81,6 +81,8 @@ function makeInterfaceValidator(inode: ts.InterfaceDeclaration, checker: ts.Type
 			// Type of single element in the array
 			const elementType = (nodeType as any).elementType.typeName
 			const typeName = ts.createIdentifier(elementType.symbol.getName())
+			const arrayGlobal = ts.createIdentifier("Array")
+			const isArrayId = ts.createPropertyAccess(arrayGlobal, "isArray")
 			const everyName = ts.createIdentifier("every");
 			const everyValidator = ts.createPropertyAccess(memberAccess, everyName)
 			// Is the element type an enum?
@@ -93,20 +95,26 @@ function makeInterfaceValidator(inode: ts.InterfaceDeclaration, checker: ts.Type
 					[ts.createTypeQueryNode(typeName)],
 					[typeName]
 				)
-				// data.<member>.every(isValidEnumArray<typeof <enumId>>(<enumId>))
-				validatorCall = ts.createCall(
-					everyValidator,
-					[],
-					[validatorIncomplete]
+				// data.<member> !== "undefined" && data.<member>.every(isValidEnumArray<typeof <enumId>>(<enumId>))
+				validatorCall = ts.createLogicalAnd(
+					ts.createCall(isArrayId, [], [memberAccess]),
+					ts.createCall(
+						everyValidator,
+						[],
+						[validatorIncomplete]
+					)
 				)
 			}
 			// Interface
 			else {
 				validatorName = ts.createIdentifier("isValid"+typeName.text)
-				validatorCall = ts.createCall(
-					everyValidator,
-					[],
-					[validatorName]
+				validatorCall = ts.createLogicalAnd(
+					ts.createCall(isArrayId, [], [memberAccess]),
+					ts.createCall(
+						everyValidator,
+						[],
+						[validatorName]
+					)
 				)
 			}
 		}

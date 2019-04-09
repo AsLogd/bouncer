@@ -116,3 +116,12 @@ export interface J {
 export interface K {
 	a: G[]
 }
+
+/**
+ * @boundary
+ */
+export interface L {
+	a: G[]
+	b?: J
+	i: I
+}

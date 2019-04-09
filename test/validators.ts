@@ -21,7 +21,7 @@ export function isValidEnumArray<T>(e: T): (data: any) => data is keyof T {
         return data in e || Object.values(e).includes(data);
     };
 }
-import { A, B, D, E, F, G, H, GG, GG2, GG3, I, J, K } from "./in";
+import { A, B, D, E, F, G, H, GG, GG2, GG3, I, J, K, L } from "./in";
 export function isValidA(data: any): data is A {
     return typeof data !== "undefined" && isValidstring(data.str) && isValidnumber(data.num) && isValidboolean(data.bool) && isValidany(data.a);
 }
@@ -44,8 +44,11 @@ export function isValidI(data: any): data is I {
     return typeof data !== "undefined" && isValidEnum<typeof GG>(GG, data.g) && isValidEnum<typeof GG2>(GG2, data.g2) && isValidEnum<typeof GG3>(GG3, data.g3);
 }
 export function isValidJ(data: any): data is J {
-    return typeof data !== "undefined" && data.a.every(isValidB);
+    return typeof data !== "undefined" && (Array.isArray(data.a) && data.a.every(isValidB));
 }
 export function isValidK(data: any): data is K {
-    return typeof data !== "undefined" && data.a.every(isValidEnumArray<typeof G>(G));
+    return typeof data !== "undefined" && (Array.isArray(data.a) && data.a.every(isValidEnumArray<typeof G>(G)));
+}
+export function isValidL(data: any): data is L {
+    return typeof data !== "undefined" && (Array.isArray(data.a) && data.a.every(isValidEnumArray<typeof G>(G))) && (typeof data.b === "undefined" || isValidJ(data.b)) && isValidI(data.i);
 }

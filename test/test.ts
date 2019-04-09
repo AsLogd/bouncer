@@ -97,3 +97,17 @@ c = '{"a":["E", "B", "C", "D"]}'
 assert(validators.isValidK(JSON.parse(c)) === false, "Invalid interface is valid (enum array (key))")
 c = '{"a":[5, 1, 2, 3]}'
 assert(validators.isValidK(JSON.parse(c)) === false, "Invalid interface is valid (enum array (num))")
+
+c = '{"a":["A", "B"], "i": {"g": 5, "g2":"B", "g3":"E"}}'
+assert(validators.isValidL(JSON.parse(c)), "Valid interface is invalid (misc 1)")
+c = '{"a":["A", "B"], "b":{"a":[{"str":"b", "a":2}, {"str":"a"}]}, "i": {"g": 5, "g2":"B", "g3":"E"}}'
+assert(validators.isValidL(JSON.parse(c)), "Valid interface is invalid (misc 2)")
+
+c = '{"a":["A", "B"], "b":{"a":{"a":1}},"i": {"g": 5, "g2":"B", "g3":"E"}}'
+assert(validators.isValidL(JSON.parse(c)) === false, "Invalid interface is valid (misc 1)")
+c = '{"a":["A", "B", 10], "i": {"g": 5, "g2":"B", "g3":"E"}}'
+assert(validators.isValidL(JSON.parse(c)) === false, "Invalid interface is valid (misc 2)")
+c = '{"a":["A", "B"], "i": {"a": 5, "g2":"B", "g3":"E"}}'
+assert(validators.isValidL(JSON.parse(c)) === false, "Invalid interface is valid (misc 3)")
+c = '{"a":{"A":0, "B":1}, "i": {"a": 5, "g2":"B", "g3":"E"}}'
+assert(validators.isValidL(JSON.parse(c)) === false, "Invalid interface is valid (misc 4)")
