@@ -1,5 +1,6 @@
 import * as assert from "assert"
 import * as validators from "./validators"
+import * as input from "./in"
 
 let c1 = '{"str": "string", "num": 1, "bool": true, "a": "a"}'
 assert(validators.isValidA(JSON.parse(c1)), "Valid interface is not true")
@@ -43,3 +44,11 @@ c = '{}'
 assert(validators.isValidF(JSON.parse(c)), "Valid interface is not true (empty object with question members)")
 
 assert(validators.isValidF(undefined) === false, "Invalid interface is true (undefined)")
+
+assert(validators.isValidEnum<typeof input.G>(input.G, '1'), "Valid enum is invalid (string)")
+assert(validators.isValidEnum<typeof input.G>(input.G, 1), "Valid enum is invalid (num)")
+assert(validators.isValidEnum<typeof input.G>(input.G, 'A'), "Valid enum is invalid (key)")
+
+assert(validators.isValidEnum<typeof input.G>(input.G, '10') === false, "Invalid enum is valid (string)")
+assert(validators.isValidEnum<typeof input.G>(input.G, 10) === false, "Invalid enum is valid (num)")
+assert(validators.isValidEnum<typeof input.G>(input.G, 'Z') === false, "Invalid enum is valid (key)")

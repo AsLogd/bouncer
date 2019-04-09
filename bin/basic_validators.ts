@@ -13,3 +13,6 @@ export function isValidany(data: any): data is boolean {
 export function isValidnull(data: any): data is boolean {
 	return data === null;
 }
+export function isValidEnum<T>(e: T, data: any): data is keyof T {
+	return data in e || Object.values(e).includes(data)
+}

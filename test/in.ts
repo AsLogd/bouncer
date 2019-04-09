@@ -46,3 +46,20 @@ export interface F {
 	str?: string,
 	num?: number
 }
+
+/**
+ * @boundary
+ */
+export enum G {
+	A,
+	B,
+	C,
+	D
+}
+
+/**
+ * @boundary
+ */
+export interface H {
+	g: G
+}
