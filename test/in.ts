@@ -109,3 +109,10 @@ export interface I {
 export interface J {
 	a: B[]
 }
+
+/**
+ * @boundary
+ */
+export interface K {
+	a: G[]
+}

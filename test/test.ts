@@ -82,7 +82,18 @@ c = '{"g": "A", "g2": "F", "g3": "E"}'
 assert(validators.isValidH(JSON.parse(c)), "Valid enum is invalid (multiple enum members)")
 
 c = '{"a":[]}'
-assert(validators.isValidJ(JSON.parse(c)), "Valid enum is invalid (empty array)")
-
+assert(validators.isValidJ(JSON.parse(c)), "Valid interface is invalid (empty array)")
 c = '{"a":[{"str": "a"}, {"str":"b", "a": 2}]}'
-assert(validators.isValidJ(JSON.parse(c)), "Valid enum is invalid (array)")
+assert(validators.isValidJ(JSON.parse(c)), "Valid interface is invalid (array)")
+
+c = '{"a":[]}'
+assert(validators.isValidK(JSON.parse(c)), "Valid interface is invalid (empty enum array)")
+c = '{"a":["A", "B", "C", "D"]}'
+assert(validators.isValidK(JSON.parse(c)), "Valid interface is invalid (enum array (key))")
+c = '{"a":[0, 1, 2, 3]}'
+assert(validators.isValidK(JSON.parse(c)), "Valid interface is invalid (enum array (num))")
+
+c = '{"a":["E", "B", "C", "D"]}'
+assert(validators.isValidK(JSON.parse(c)) === false, "Invalid interface is valid (enum array (key))")
+c = '{"a":[5, 1, 2, 3]}'
+assert(validators.isValidK(JSON.parse(c)) === false, "Invalid interface is valid (enum array (num))")
