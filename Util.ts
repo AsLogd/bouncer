@@ -221,7 +221,8 @@ export function makeBoundaryValidators(files: string[], outputPath: string) {
 		}
 		if (imports.length) {
 			const aux = file.fileName.split("/")
-			const moduleName = aux.slice(-1)[0].split(".")[0]
+			// get filename without extension
+			const moduleName = aux.slice(-1)[0].split(".").slice(0, -1)
 			const op = aux.slice(0, -1).join("/")
 			const p = path.relative(outputPath, op) || '.'
 			importNodes.push(
