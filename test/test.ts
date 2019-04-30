@@ -53,8 +53,8 @@ assert(validators.isValidEnum<typeof input.G>(input.G, '10') === false, "Invalid
 assert(validators.isValidEnum<typeof input.G>(input.G, 10) === false, "Invalid enum is valid (num)")
 assert(validators.isValidEnum<typeof input.G>(input.G, 'Z') === false, "Invalid enum is valid (key)")
 
-c = '{"g": 1}'
-assert(validators.isValidH(JSON.parse(c)), "Valid enum is invalid (enum member)")
+let h = '{"g": 1}'
+assert(validators.isValidH(JSON.parse(h)), "Valid enum is invalid (enum member)")
 
 assert(validators.isValidEnum<typeof input.GG>(input.GG, '5'), "Valid enum(with constructors) is invalid (string)")
 assert(validators.isValidEnum<typeof input.GG>(input.GG, 5), "Valid enum(with constructors) is invalid (num)")
@@ -111,3 +111,19 @@ c = '{"a":["A", "B"], "i": {"a": 5, "g2":"B", "g3":"E"}}'
 assert(validators.isValidL(JSON.parse(c)) === false, "Invalid interface is valid (misc 3)")
 c = '{"a":{"A":0, "B":1}, "i": {"a": 5, "g2":"B", "g3":"E"}}'
 assert(validators.isValidL(JSON.parse(c)) === false, "Invalid interface is valid (misc 4)")
+
+let b = '{"a":2, "str": "a"}'
+assert(validators.isValidM(JSON.parse(b)), "Valid type alias is invalid (1)")
+c = '{"a": "asdf"}'
+assert(validators.isValidM(JSON.parse(c)) === false, "Invalid type alias is valid (1)")
+
+b = '{"a":2, "str": "a"}'
+assert(validators.isValidN(JSON.parse(b)), "Valid type alias is invalid (2)")
+let d = '{"a":{"str":"a", "num": 1, "bool": true, "a":1}, "c": 12}'
+assert(validators.isValidN(JSON.parse(b)), "Valid type alias is invalid (2)")
+c = '{"a": "asdf"}'
+assert(validators.isValidN(JSON.parse(c)) === false, "Invalid type alias is valid (2)")
+
+assert(validators.isValidO(JSON.parse(b)), "Valid type alias is invalid (3)")
+assert(validators.isValidO(JSON.parse(d)), "Valid type alias is invalid (4)")
+assert(validators.isValidO(JSON.parse(h)), "Valid type alias is invalid (5)")

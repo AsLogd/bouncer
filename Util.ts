@@ -22,6 +22,68 @@ export function mapFiles(fileNames: string[], f: (sourceFile: ts.SourceFile) => 
 	return fileNames.map(fn => f(parseFile(fn)))
 }
 
+function makeTypeAliasValidator(tanode: ts.TypeAliasDeclaration, checker: ts.TypeChecker): ts.FunctionDeclaration {
+	const name = tanode.name.getText()
+
+	const paramName = ts.createIdentifier("data");
+	const parameter = ts.createParameter(
+		/*decorators*/ undefined,
+		/*modifiers*/ undefined,
+		/*dotDotDotToken*/ undefined,
+		paramName,
+		/*questionToken*/ undefined,
+		/*type*/ ts.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword)
+	);
+
+	const typeValidatorCalls: ts.Expression[] = []
+
+	tanode.type.forEachChild((child) => {
+		const type = checker.getTypeAtLocation(child)
+		const nodeType = checker.typeToTypeNode(type)
+		const name = type.aliasSymbol
+			? type.aliasSymbol.getName()
+			: type.getSymbol().getName()
+		const validatorName = ts.createIdentifier("isValid"+name)
+		const validatorCall = ts.createCall(validatorName, undefined, [paramName])
+		typeValidatorCalls.push(validatorCall)
+	})
+	/*
+	console.log("=========Type Alias:==========")
+	console.log(name)
+	console.log(tanode)
+	*/
+
+	const statements = [ts.createReturn(
+		typeValidatorCalls.reduce(ts.createLogicalOr)
+	)]
+
+	const typeAliasSymbol = checker.getSymbolAtLocation(tanode.name)
+	const typeAliasType = checker.typeToTypeNode(
+		checker.getDeclaredTypeOfSymbol(typeAliasSymbol)
+	)
+	const returnType = ts.createTypePredicateNode(paramName, typeAliasType)
+
+	return ts.createFunctionDeclaration(
+		/*decorators*/
+		undefined,
+		/*modifiers*/
+		[ts.createToken(ts.SyntaxKind.ExportKeyword)],
+		/*asteriskToken*/
+		undefined,
+		/*identifier*/
+		"isValid"+name,
+		/*typeParameters*/
+		undefined,
+		/*parameters*/
+		[parameter],
+		/*returnType*/
+		//ts.createKeywordTypeNode(ts.SyntaxKind.BooleanKeyword),
+		returnType,
+		ts.createBlock(statements, /*multiline*/ true)
+	);
+
+}
+
 /**
  * Given an interface I, creates a validator declaration that checks
  * if a given object implements I in execution time
@@ -216,6 +278,13 @@ export function makeBoundaryValidators(files: string[], outputPath: string) {
 				imports.push(statement.name)
 				nodes.push(
 					makeInterfaceValidator(statement, checker)
+				)
+			}
+			if(ts.isTypeAliasDeclaration(statement)
+				&& isBoundary(statement)) {
+				imports.push(statement.name)
+				nodes.push(
+					makeTypeAliasValidator(statement, checker)
 				)
 			}
 		}

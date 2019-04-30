@@ -125,3 +125,18 @@ export interface L {
 	b?: J
 	i: I
 }
+
+/**
+ * @boundary
+ */
+ export type M = B
+
+ /**
+ * @boundary
+ */
+ export type N = B | D
+
+ /**
+ * @boundary
+ */
+ export type O = N | H
