@@ -67,6 +67,14 @@ export interface H {
 /**
  * @boundary
  */
+export interface HH {
+	g: G
+	gg?: G
+}
+
+/**
+ * @boundary
+ */
 export enum GG {
 	A=4,
 	B,
@@ -113,6 +121,14 @@ export interface J {
 /**
  * @boundary
  */
+export interface JJ {
+	a: B[][]
+}
+
+
+/**
+ * @boundary
+ */
 export interface K {
 	a: G[]
 }
@@ -140,3 +156,10 @@ export interface L {
  * @boundary
  */
  export type O = N | H
+
+/**
+ * @boundary
+ */
+export interface P {
+	a: B | D[]
+}

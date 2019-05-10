@@ -1,6 +1,7 @@
 import * as fs from "fs";
 import * as path from "path"
 import * as ts from "typescript"
+import * as assert from "assert"
 
 // Interfaces with this tag in JSDocs will be
 // considered when creating boundary validators
@@ -22,7 +23,7 @@ export function mapFiles(fileNames: string[], f: (sourceFile: ts.SourceFile) => 
 	return fileNames.map(fn => f(parseFile(fn)))
 }
 
-function makeTypeAliasValidator(tanode: ts.TypeAliasDeclaration, checker: ts.TypeChecker): ts.FunctionDeclaration {
+function makeTypeAliasValidator(tanode: ts.TypeAliasDeclaration): ts.FunctionDeclaration {
 	const name = tanode.name.getText()
 
 	const paramName = ts.createIdentifier("data");
@@ -47,11 +48,6 @@ function makeTypeAliasValidator(tanode: ts.TypeAliasDeclaration, checker: ts.Typ
 		const validatorCall = ts.createCall(validatorName, undefined, [paramName])
 		typeValidatorCalls.push(validatorCall)
 	})
-	/*
-	console.log("=========Type Alias:==========")
-	console.log(name)
-	console.log(tanode)
-	*/
 
 	const statements = [ts.createReturn(
 		typeValidatorCalls.reduce(ts.createLogicalOr)
@@ -84,61 +80,130 @@ function makeTypeAliasValidator(tanode: ts.TypeAliasDeclaration, checker: ts.Typ
 
 }
 
-/**
- * Given an interface I, creates a validator declaration that checks
- * if a given object implements I in execution time
- * TODO: refactor
- */
-function makeInterfaceValidator(inode: ts.InterfaceDeclaration, checker: ts.TypeChecker): ts.FunctionDeclaration {
-	const name = inode.name.getText()
+function symbolIsInterface(symbol: ts.Symbol): boolean {
+	return !!(symbol.flags & ts.SymbolFlags.Interface)
+}
 
-	const paramName = ts.createIdentifier("data");
-	const parameter = ts.createParameter(
-		/*decorators*/ undefined,
-		/*modifiers*/ undefined,
-		/*dotDotDotToken*/ undefined,
-		paramName,
-		/*questionToken*/ undefined,
-		/*type*/ ts.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword)
-	);
+function symbolIsEnum(symbol: ts.Symbol): boolean {
+	return !!(symbol.flags & ts.SymbolFlags.Enum)
+}
 
-	let checkUndefined: ts.Expression = ts.createStrictInequality(
-		ts.createTypeOf(paramName),
-		ts.createStringLiteral("undefined")
-	)
-	/*
-	console.log("=========Interface:==========")
-	console.log(name)
-	*/
-	const memberValidatorCalls: ts.Expression[] = inode.members.map(m => {
+function makeTypeValidator(id: ts.Expression, tnode: ts.Node): ts.Expression {
+	// In case of unhandled type
+	const validatorAny = ts.createIdentifier("isValidany")
+	let validatorCall: ts.Expression = ts.createCall(validatorAny, [], [id])
+
+	// If type is an array, validator must:
+	if (ts.isArrayTypeNode(tnode))
+	{
+		// -Check array type
+		const arrayGlobal = ts.createIdentifier("Array")
+		const isArrayId = ts.createPropertyAccess(arrayGlobal, "isArray")
+		// -Check that every element is of the base type
+		// 		<id>.every( x => *childValidator(x)* )
+		// 		<id>.every is defined because we know it's an array
+		const everyName = ts.createIdentifier("every");
+		const everyValidator = ts.createPropertyAccess(id, everyName)
+		const paramName = ts.createIdentifier("x");
+		const functionParam = ts.createParameter(
+			[],
+			[],
+			undefined,
+			paramName,
+			undefined,
+			ts.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword)
+		)
+
+		const everyValidatorBody = ts.createArrowFunction(
+			// Modifiers
+			[],
+			// Type params
+			[],
+			// Parameters
+			[functionParam],
+			undefined,
+			undefined,
+			// Array type has to have at least one child
+			makeTypeValidator(paramName, tnode.getChildAt(0))
+		)
+
+		validatorCall = ts.createLogicalAnd(
+			ts.createCall(
+				isArrayId,
+				[],
+				[id]
+			),
+			ts.createCall(
+				everyValidator,
+				[],
+				[everyValidatorBody]
+			)
+		)
+	} else if (ts.isTypeReferenceNode(tnode)) {
+		const type = checker.getTypeAtLocation(tnode.getChildAt(0))
+		const symbol = type.getSymbol()
+		if (symbolIsInterface(symbol)) {
+			// if it's an interface, we just call the interface validator
+			const interfaceValidator = ts.createIdentifier("isValid"+type.getSymbol().getName())
+			// isValid<typeName>(<id>)
+			validatorCall = ts.createCall(
+				interfaceValidator,
+				[],
+				[id]
+			)
+		} else if (symbolIsEnum(symbol)) {
+			// It it's an enum, we call a generic enum checker with the enum type
+			const typeName = checker.symbolToEntityName(symbol, ts.SymbolFlags.Enum)
+			const enumTypeId = ts.createIdentifier(symbol.getName())
+			const enumValidator = ts.createIdentifier("isValidEnum")
+
+			// isValidEnumArray<typeof <enumName>>(<enumName>)
+			validatorCall = ts.createCall(
+				enumValidator,
+				[ts.createTypeQueryNode(typeName)],
+				[enumTypeId, id]
+			)
+
+		}
+	} else if (ts.isUnionTypeNode(tnode)) {
+		const typeValidatorCalls: ts.Expression[] = []
+
+		tnode.types.forEach((child) => {
+			typeValidatorCalls.push(makeTypeValidator(id, child))
+		})
+
+		validatorCall = typeValidatorCalls.reduce(ts.createLogicalOr)
+	} else if(ts.isToken(tnode)) {
+		const interfaceValidator = ts.createIdentifier("isValid"+ts.tokenToString(tnode.kind))
+		// isValid<token>(<id>)
+		validatorCall = ts.createCall(
+			interfaceValidator,
+			[],
+			[id]
+		)
+	}
+
+	return validatorCall
+
+}
+/*
+function makeMemberValidator(paramName: ts.Identifier): (m: ts.PropertySignature) => ts.Expression {
+	return (m) => {
 		const prop = m as ts.PropertySignature
 		const memberAccess = ts.createPropertyAccess(paramName, m.name.getText())
 		const type = checker.getTypeAtLocation(prop.type)
 		const nodeType = checker.typeToTypeNode(type)
-		/*
-		console.log("=========member:==========")
-		console.log(ts.SyntaxKind[prop.kind])
-		console.log(prop)
-		if(type.symbol){
-			console.log("===symbol")
-			console.log(type.symbol)
-			console.log("===isArray")
-			console.log(ts.isArrayTypeNode(nodeType))
-			console.log("===baseType")
-			if(ts.isArrayTypeNode(nodeType)) {
-				//console.log(nodeType.elementType)
-				if(ts.isTypeReferenceNode(nodeType.elementType)) {
-					if(ts.isEntityName(nodeType.elementType.typeName)) {
-						console.log((nodeType.elementType.typeName as any).symbol.getName())
-					}
-				}
+//		const validatorCall = makeTypeValidator(memberAccess, type)
+		const validatorCall: any = null
+		const children = []
+		ts.forEachChild(m, (c) => {
+			console.log(nodeString(c))
+			console.log(c)
+		})
 
-			}
 
-		}
-		*/
-		let validatorName, validatorCall
 		// Is the member an array?
+
 		if (ts.isArrayTypeNode(nodeType) && ts.isTypeReferenceNode(nodeType.elementType)) {
 			// Type of single element in the array
 			const elementType = (nodeType as any).elementType.typeName
@@ -182,6 +247,7 @@ function makeInterfaceValidator(inode: ts.InterfaceDeclaration, checker: ts.Type
 		}
 		// Non array
 		else {
+			//TODO: something wrong with single value enums
 			if (type.symbol && type.symbol.valueDeclaration && ts.isEnumDeclaration(type.symbol.valueDeclaration)) {
 				// Enum identifier (type name)
 				const enumId = ts.createIdentifier(type.symbol.name)
@@ -211,14 +277,73 @@ function makeInterfaceValidator(inode: ts.InterfaceDeclaration, checker: ts.Type
 		}
 
 		return validatorCall
-	})
+	}
+}
+		*/
 
+function makeMemberValidator(paramName: ts.Identifier): (member: ts.PropertySignature) => ts.Expression {
+	return (member) => {
+		// Expression to access <member>
+		let memberAccess = ts.createPropertyAccess(paramName, member.name.getText())
+		// Expression that validates the member's type
+		let validatorCall = makeTypeValidator(memberAccess, member.type)
+
+		// undefined is a valid value in optional members
+		if(member.questionToken)
+		{
+			// Can't find a way to compare with undefined keyword
+			validatorCall = ts.createLogicalOr(
+				ts.createStrictEquality(
+					ts.createTypeOf(memberAccess),
+					ts.createStringLiteral("undefined")
+				),
+				validatorCall
+			)
+		}
+
+		return validatorCall
+	}
+}
+
+/**
+ * Given an interface I, creates a validator declaration that checks
+ * if a given object implements I in execution time
+ * TODO: refactor
+ */
+function makeInterfaceValidator(inode: ts.InterfaceDeclaration): ts.FunctionDeclaration {
+	const name = inode.name.getText()
+	const paramName = ts.createIdentifier("data");
+	const parameter = ts.createParameter(
+		/*decorators*/ undefined,
+		/*modifiers*/ undefined,
+		/*dotDotDotToken*/ undefined,
+		paramName,
+		/*questionToken*/ undefined,
+		/*type*/ ts.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword)
+	);
+
+	// The interface can't be undefined, we are going to check it's members
+	let checkUndefined: ts.Expression = ts.createStrictInequality(
+		ts.createTypeOf(paramName),
+		ts.createStringLiteral("undefined")
+	)
+
+	// List of expressions that validate each member
+	const memberValidatorCalls: ts.Expression[] = inode.members.map(
+		makeMemberValidator(paramName)
+	)
+
+	// First check undefined
 	memberValidatorCalls.unshift(checkUndefined)
 
+	// All expressions must be true for the interface to be valid
 	const statements = [ts.createReturn(
 		memberValidatorCalls.reduce(ts.createLogicalAnd)
 	)]
 
+	// Return typescript "is" magic
+	// This makes the typescript compiler know the type of the data
+	// in the scope where the call is true
 	const interfaceSymbol = checker.getSymbolAtLocation(inode.name)
 	const interfaceType = checker.typeToTypeNode(
 		checker.getDeclaredTypeOfSymbol(interfaceSymbol)
@@ -249,51 +374,57 @@ function makeInterfaceValidator(inode: ts.InterfaceDeclaration, checker: ts.Type
  * Checks whether the statement is an interface declaration
  * tagged with the boundary tag
  */
-function isBoundary(statement: ts.Statement): statement is ts.InterfaceDeclaration {
+function isBoundary(statement: ts.Statement): boolean {
 	return ts.getJSDocTags(statement).some(s =>
 			s.getText() === BOUNDARY_JSDOC_TAG
 		)
 }
 
+let checker: ts.TypeChecker
 /**
  * Creates validators for the boundary interfaces found in 'file'
  */
 export function makeBoundaryValidators(files: string[], outputPath: string) {
 	// Build a program using the set of root file names in fileNames
-	let program = ts.createProgram(files, {});
-
-	// Get the checker, we will use it to find more about interfaces
-	let checker = program.getTypeChecker();
+	const program = ts.createProgram(files, {});
+	checker = program.getTypeChecker()
 	const importNodes: ts.Node[] = []
 	const nodes: ts.Node[] = []
 	for (let file of program.getSourceFiles()) {
+		// Filter typescript files
+		if(files.every((x) => file.fileName.indexOf(x) === -1))
+			continue
+
 		let imports = []
 		for (let statement of file.statements) {
-			if (ts.isEnumDeclaration(statement)
-				&& isBoundary(statement)) {
+
+			if(!isBoundary(statement))
+				continue
+
+			if (ts.isEnumDeclaration(statement)) {
 				imports.push(statement.name)
 			}
-			if (ts.isInterfaceDeclaration(statement)
-				&& isBoundary(statement)) {
+			else if (ts.isInterfaceDeclaration(statement)) {
 				imports.push(statement.name)
 				nodes.push(
-					makeInterfaceValidator(statement, checker)
+					makeInterfaceValidator(statement)
 				)
 			}
-			if(ts.isTypeAliasDeclaration(statement)
-				&& isBoundary(statement)) {
+			else if(ts.isTypeAliasDeclaration(statement)) {
 				imports.push(statement.name)
 				nodes.push(
-					makeTypeAliasValidator(statement, checker)
+					makeTypeAliasValidator(statement)
 				)
 			}
 		}
+
 		if (imports.length) {
 			const aux = file.fileName.split("/")
 			// get filename without extension
 			const moduleName = aux.slice(-1)[0].split(".").slice(0, -1).join(".")
 			const op = aux.slice(0, -1).join("/")
-			const p = path.relative(outputPath, op) || '.'
+			const p = path.relative(outputPath, op)
+			const pre = p ? './' : '.'
 			importNodes.push(
 				ts.createImportDeclaration(
 					undefined,
@@ -308,7 +439,7 @@ export function makeBoundaryValidators(files: string[], outputPath: string) {
 						)
 					),
 					ts.createStringLiteral(
-						p + "/" + moduleName
+						pre + p + '/' + moduleName
 					)
 				)
 			)
@@ -341,17 +472,17 @@ export function createFile(nodes: ts.Node[], output: string) {
 
 /* PRINT */
 export function nodeString(node: ts.Node): string {
-	return`<${ts.SyntaxKind[node.kind]}>`
+	return `<${ts.SyntaxKind[node.kind]}>`
 }
 
 export function printAST(node: ts.Node) {
-	console.log("_")
+	console.log("_" + nodeString(node) + " - " + node.getText() + "__")
 	let level = 0
 
 	function printSubtree(node: ts.Node) {
 		level += 1
-		console.log("|-".repeat(level) + "-" + nodeString(node))
-		console.log(node)
+		console.log("|-".repeat(level) + "-" + nodeString(node) + " - " + node.getText())
+		//console.log(node)
 		ts.forEachChild(node, printSubtree)
 		level -= 1
 	}

@@ -14,13 +14,16 @@ if (outputIndex > -1) {
 	fileNames = process.argv.slice(2)
 }
 
+
 // Create code file containing the basic validators
 // and the dynamically generated validators from
 // the input files
+
 
 Util.createFile(
 	Util.makeBoundaryValidators(fileNames, output),
 	output
 )
+
 
 //Util.mapFiles(fileNames, Util.printAST)

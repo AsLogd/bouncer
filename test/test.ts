@@ -56,6 +56,11 @@ assert(validators.isValidEnum<typeof input.G>(input.G, 'Z') === false, "Invalid 
 let h = '{"g": 1}'
 assert(validators.isValidH(JSON.parse(h)), "Valid enum is invalid (enum member)")
 
+let hh = '{"g": 1, "gg": 1}'
+assert(validators.isValidHH(JSON.parse(hh)), "Valid enum is invalid (optional enum member)")
+
+assert(validators.isValidHH(JSON.parse(h)), "Valid enum is invalid (missing optional enum member)")
+
 assert(validators.isValidEnum<typeof input.GG>(input.GG, '5'), "Valid enum(with constructors) is invalid (string)")
 assert(validators.isValidEnum<typeof input.GG>(input.GG, 5), "Valid enum(with constructors) is invalid (num)")
 assert(validators.isValidEnum<typeof input.GG>(input.GG, 'A'), "Valid enum(with constructors) is invalid (key)")
@@ -85,6 +90,9 @@ c = '{"a":[]}'
 assert(validators.isValidJ(JSON.parse(c)), "Valid interface is invalid (empty array)")
 c = '{"a":[{"str": "a"}, {"str":"b", "a": 2}]}'
 assert(validators.isValidJ(JSON.parse(c)), "Valid interface is invalid (array)")
+
+c = '{"a":[[{"str": "a"}, {"str":"b", "a": 2}], [{"str": "a"}], [{"str": "a"}, {"str": "b"}, {"str": "a", "a":3}]]}'
+assert(validators.isValidJJ(JSON.parse(c)), "Valid interface is invalid (matrix)")
 
 c = '{"a":[]}'
 assert(validators.isValidK(JSON.parse(c)), "Valid interface is invalid (empty enum array)")
@@ -127,3 +135,15 @@ assert(validators.isValidN(JSON.parse(c)) === false, "Invalid type alias is vali
 assert(validators.isValidO(JSON.parse(b)), "Valid type alias is invalid (3)")
 assert(validators.isValidO(JSON.parse(d)), "Valid type alias is invalid (4)")
 assert(validators.isValidO(JSON.parse(h)), "Valid type alias is invalid (5)")
+
+let p = '{"a": {"str": "asdf", "a": 2}}'
+assert(validators.isValidP(JSON.parse(p)), "Valid interface is invalid (type alias member)")
+
+p = '{"a": [{"a": {"str": "asdf", "a": 2, "num": 3, "bool": true}, "c": 12}, {"a": {"str": "asdf", "a": "2", "num": 3, "bool": false}, "c": 12}]}'
+assert(validators.isValidP(JSON.parse(p)), "Valid interface is invalid (type alias member 2)")
+
+p = '{"a": {"stra": "asdf", "a": 2, "num": 3, "bool": true}}'
+assert(validators.isValidP(JSON.parse(p)) === false, "Invalid interface is valid (type alias member 1)")
+
+p = '{"a": [{"str": "asdf", "num": 3, "bool": true}, {"str": "asdf", "a": "2", "num": 3, "bool": true}]}'
+assert(validators.isValidP(JSON.parse(p)) === false, "Invalid interface is valid (type alias member 2)")
