@@ -21,7 +21,7 @@ export function isValidEnumArray<T>(e: T): (data: any) => data is keyof T {
         return data in e || Object.values(e).includes(data);
     };
 }
-import { A, B, D, E, F, G, H, HH, GG, GG2, GG3, I, J, JJ, K, L, M, N, O, P } from "./in";
+import { A, B, D, E, F, G, H, HH, GG, GG2, GG3, I, J, JJ, K, L, M, N, O, P, PP } from "./in";
 export function isValidA(data: any): data is A {
     return typeof data !== "undefined" && isValidstring(data.str) && isValidnumber(data.num) && isValidboolean(data.bool) && isValidany(data.a);
 }
@@ -69,4 +69,7 @@ export function isValidO(data: any): data is O {
 }
 export function isValidP(data: any): data is P {
     return typeof data !== "undefined" && (isValidB(data.a) || Array.isArray(data.a) && data.a.every((x: any) => isValidD(x)));
+}
+export function isValidPP(data: any): data is PP {
+    return typeof data !== "undefined" && (Array.isArray(data.a) && data.a.every((x: any) => Array.isArray(x) && x.every((x: any) => Array.isArray(x) && x.every((x: any) => isValidB(x)))) || isValidD(data.a));
 }

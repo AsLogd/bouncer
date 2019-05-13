@@ -163,3 +163,10 @@ export interface L {
 export interface P {
 	a: B | D[]
 }
+
+/**
+ * @boundary
+ */
+export interface PP {
+	a: B[][][] | D
+}
