@@ -1,18 +1,29 @@
 {
   "name": "ts-bouncer",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "main": "bin/index.js",
   "license": "MIT",
-  "dependencies": {},
-  "files": ["bin/*"],
-  "repository": {
-    "type" : "git",
-    "url" : "https://github.com/aslogd/ts-bouncer.git"
+  "dependencies": {
+    "@types/glob": "^7.1.1",
+    "glob": "^7.1.4"
   },
-  "keywords": ["typescript", "runtime", "check", "boundary", "compiler"],
+  "files": [
+    "bin/*"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aslogd/ts-bouncer.git"
+  },
+  "keywords": [
+    "typescript",
+    "runtime",
+    "check",
+    "boundary",
+    "compiler"
+  ],
   "homepage": "https://github.com/aslogd/ts-bouncer",
-  "bugs":{
-    "url":"https://github.com/aslogd/ts-bouncer/issues"
+  "bugs": {
+    "url": "https://github.com/aslogd/ts-bouncer/issues"
   },
   "description": "Automatic validator generation for serializable TypeScript interfaces using the Compiler API",
   "devDependencies": {
@@ -22,7 +33,7 @@
   "scripts": {
     "prepare": "yarn run clean && yarn run build",
     "pretest": "yarn run prepare",
-    "test": "yarn start test/in.ts -o test/ && tsc test/test.ts && node test/test.js",
+    "test": "yarn start 'test/**/*in*.ts' -o test/ && tsc test/test.ts && node test/test.js",
     "build": "tsc index.ts --outDir bin && cp basic_validators_template.ts bin/basic_validators.ts && chmod +x bin/index.js",
     "start": "./bin/index.js",
     "clean": "rm -f *.js validators.* bin/* test/validators.ts test/*.js"

@@ -150,3 +150,10 @@ assert(validators.isValidP(JSON.parse(p)) === false, "Invalid interface is valid
 
 p = '{"a": [[[{"str": "asdf"}, {"str": "asdf", "a": "2"}], [{"str": "asdf"}]], [[{"str": "asdf"}]]]}'
 assert(validators.isValidPP(JSON.parse(p)), "Valid interface is ivalid (type alias member + 3d matrix)")
+
+let auxA = '{"a": "str"}'
+assert(validators.isValidauxA(JSON.parse(auxA)), "Valid interface is invalid (external file)")
+
+let auxauxA = '{"a": "str"}'
+assert(validators.isValidauxauxA(JSON.parse(auxA)), "Valid interface is invalid (external file in folder)")
+
