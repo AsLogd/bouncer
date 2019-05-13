@@ -76,7 +76,7 @@ export function isValidP(data: any): data is P {
     return typeof data !== "undefined" && (isValidB(data.a) || Array.isArray(data.a) && data.a.every((x: any) => isValidD(x)));
 }
 export function isValidPP(data: any): data is PP {
-    return typeof data !== "undefined" && (Array.isArray(data.a) && data.a.every((x: any) => Array.isArray(x) && x.every((x: any) => Array.isArray(x) && x.every((x: any) => isValidB(x)))) || isValidD(data.a));
+    return typeof data !== "undefined" && (Array.isArray(data.a) && data.a.every((x: any) => Array.isArray(x) && x.every((x: any) => Array.isArray(x) && x.every((x: any) => isValidB(x)))) || isValidN(data.a));
 }
 export function isValidauxA(data: any): data is auxA {
     return typeof data !== "undefined" && isValidstring(data.a);

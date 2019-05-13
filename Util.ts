@@ -16,6 +16,7 @@ export function parseFile(fileName: string) {
 	);
 }
 
+
 /**
  * Maps the input files with function f
  */
@@ -80,6 +81,10 @@ function makeTypeAliasValidator(tanode: ts.TypeAliasDeclaration): ts.FunctionDec
 
 }
 
+function symbolIsAlias(symbol: ts.Symbol): boolean {
+	return !!(symbol.flags & ts.SymbolFlags.TypeAlias)
+}
+
 function symbolIsInterface(symbol: ts.Symbol): boolean {
 	return !!(symbol.flags & ts.SymbolFlags.Interface)
 }
@@ -141,13 +146,13 @@ function makeTypeValidator(id: ts.Expression, tnode: ts.Node): ts.Expression {
 		)
 	} else if (ts.isTypeReferenceNode(tnode)) {
 		const type = checker.getTypeAtLocation(tnode.getChildAt(0))
-		const symbol = type.getSymbol()
-		if (symbolIsInterface(symbol)) {
-			// if it's an interface, we just call the interface validator
-			const interfaceValidator = ts.createIdentifier("isValid"+type.getSymbol().getName())
+		const symbol = type.getSymbol() || type.aliasSymbol
+		if (symbolIsInterface(symbol) || symbolIsAlias(symbol)) {
+			// if it's an interface or alias, we just call the validator
+			const validatorName = ts.createIdentifier("isValid"+symbol.getName())
 			// isValid<typeName>(<id>)
 			validatorCall = ts.createCall(
-				interfaceValidator,
+				validatorName,
 				[],
 				[id]
 			)
@@ -163,7 +168,6 @@ function makeTypeValidator(id: ts.Expression, tnode: ts.Node): ts.Expression {
 				[ts.createTypeQueryNode(typeName)],
 				[enumTypeId, id]
 			)
-
 		}
 	} else if (ts.isUnionTypeNode(tnode)) {
 		const typeValidatorCalls: ts.Expression[] = []

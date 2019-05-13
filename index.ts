@@ -23,10 +23,12 @@ files.map(x => console.log('-'+x))
 // Create code file containing the basic validators
 // and the dynamically generated validators from
 // the input files
+
 Util.createFile(
 	Util.makeBoundaryValidators(files, output),
 	output
 )
+
 
 
 //Util.mapFiles(fileNames, Util.printAST)
