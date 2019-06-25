@@ -159,3 +159,7 @@ assert(validators.isValidauxA(JSON.parse(auxA)), "Valid interface is invalid (ex
 let auxauxA = '{"a": "str"}'
 assert(validators.isValidauxauxA(JSON.parse(auxA)), "Valid interface is invalid (external file in folder)")
 
+assert(validators.isValidD(null) === false, "Check null values")
+
+let dnull = '{"a": null, "c": 2}'
+assert(validators.isValidD(JSON.parse(dnull)) === false, "Check null values 2")

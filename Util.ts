@@ -283,7 +283,7 @@ function makeMemberValidator(paramName: ts.Identifier): (m: ts.PropertySignature
 		return validatorCall
 	}
 }
-		*/
+*/
 
 function makeMemberValidator(paramName: ts.Identifier): (member: ts.PropertySignature) => ts.Expression {
 	return (member) => {
@@ -295,10 +295,10 @@ function makeMemberValidator(paramName: ts.Identifier): (member: ts.PropertySign
 		// undefined is a valid value in optional members
 		if(member.questionToken)
 		{
-			// Can't find a way to compare with undefined keyword
 			validatorCall = ts.createLogicalOr(
 				ts.createStrictEquality(
 					ts.createTypeOf(memberAccess),
+					// Can't find a way to compare with undefined keyword
 					ts.createStringLiteral("undefined")
 				),
 				validatorCall
@@ -326,10 +326,16 @@ function makeInterfaceValidator(inode: ts.InterfaceDeclaration): ts.FunctionDecl
 		/*type*/ ts.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword)
 	);
 
-	// The interface can't be undefined, we are going to check it's members
-	let checkUndefined: ts.Expression = ts.createStrictInequality(
-		ts.createTypeOf(paramName),
-		ts.createStringLiteral("undefined")
+	// The interface can't be undefined nor null, we are going to check its members
+	let checkUndefined: ts.Expression = ts.createLogicalAnd(
+		ts.createStrictInequality(
+			ts.createTypeOf(paramName),
+			ts.createStringLiteral("undefined")
+		),
+		ts.createStrictInequality(
+			paramName,
+			ts.createNull()
+		)
 	)
 
 	// List of expressions that validate each member
