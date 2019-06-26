@@ -163,3 +163,11 @@ assert(validators.isValidD(null) === false, "Check null values")
 
 let dnull = '{"a": null, "c": 2}'
 assert(validators.isValidD(JSON.parse(dnull)) === false, "Check null values 2")
+
+let ppp = '{"bb": [{"b": {"str": "str"}}, {"b": {"str": "str", "a": "p"}}]}'
+assert(validators.isValidPPP(JSON.parse(ppp)), "Valid array generic")
+
+let nobb = '{}'
+assert(validators.isValidPPP(JSON.parse(nobb)) === false, "Invalid array generic")
+let nobb2 = '{"bb": [{"b": "a"}, {"c": 2}]}'
+assert(validators.isValidPPP(JSON.parse(nobb2)) === false, "Invalid array generic (2)")

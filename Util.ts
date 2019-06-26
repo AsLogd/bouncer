@@ -93,69 +93,78 @@ function symbolIsEnum(symbol: ts.Symbol): boolean {
 	return !!(symbol.flags & ts.SymbolFlags.Enum)
 }
 
+function createArrayValidator(id: ts.Expression, baseType: ts.Node): ts.Expression {
+	// -Check array type
+	const arrayGlobal = ts.createIdentifier("Array")
+	const isArrayId = ts.createPropertyAccess(arrayGlobal, "isArray")
+	// -Check that every element is of the base type
+	// 		<id>.every( x => *childValidator(x)* )
+	// 		<id>.every is defined because we know it's an array
+	const everyName = ts.createIdentifier("every");
+	const everyValidator = ts.createPropertyAccess(id, everyName)
+	const paramName = ts.createIdentifier("x");
+	const functionParam = ts.createParameter(
+		[],
+		[],
+		undefined,
+		paramName,
+		undefined,
+		ts.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword)
+	)
+
+	const everyValidatorBody = ts.createArrowFunction(
+		// Modifiers
+		[],
+		// Type params
+		[],
+		// Parameters
+		[functionParam],
+		undefined,
+		undefined,
+		makeTypeValidator(paramName, baseType)
+	)
+
+	return ts.createLogicalAnd(
+		ts.createCall(
+			isArrayId,
+			[],
+			[id]
+		),
+		ts.createCall(
+			everyValidator,
+			[],
+			[everyValidatorBody]
+		)
+	)
+}
+
 function makeTypeValidator(id: ts.Expression, tnode: ts.Node): ts.Expression {
 	// In case of unhandled type
 	const validatorAny = ts.createIdentifier("isValidany")
 	let validatorCall: ts.Expression = ts.createCall(validatorAny, [], [id])
 
-	// If type is an array, validator must:
-	if (ts.isArrayTypeNode(tnode))
-	{
-		// -Check array type
-		const arrayGlobal = ts.createIdentifier("Array")
-		const isArrayId = ts.createPropertyAccess(arrayGlobal, "isArray")
-		// -Check that every element is of the base type
-		// 		<id>.every( x => *childValidator(x)* )
-		// 		<id>.every is defined because we know it's an array
-		const everyName = ts.createIdentifier("every");
-		const everyValidator = ts.createPropertyAccess(id, everyName)
-		const paramName = ts.createIdentifier("x");
-		const functionParam = ts.createParameter(
-			[],
-			[],
-			undefined,
-			paramName,
-			undefined,
-			ts.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword)
-		)
+	if (ts.isArrayTypeNode(tnode)) {
+		// Array type first child is base type
+		validatorCall = createArrayValidator(id, tnode.getChildAt(0))
 
-		const everyValidatorBody = ts.createArrowFunction(
-			// Modifiers
-			[],
-			// Type params
-			[],
-			// Parameters
-			[functionParam],
-			undefined,
-			undefined,
-			// Array type has to have at least one child
-			makeTypeValidator(paramName, tnode.getChildAt(0))
-		)
-
-		validatorCall = ts.createLogicalAnd(
-			ts.createCall(
-				isArrayId,
-				[],
-				[id]
-			),
-			ts.createCall(
-				everyValidator,
-				[],
-				[everyValidatorBody]
-			)
-		)
 	} else if (ts.isTypeReferenceNode(tnode)) {
 		const type = checker.getTypeAtLocation(tnode.getChildAt(0))
 		const symbol = type.getSymbol() || type.aliasSymbol
 		if (symbolIsInterface(symbol) || symbolIsAlias(symbol)) {
-			// if it's an interface or alias, we just call the validator
-			const validatorName = ts.createIdentifier("isValid"+symbol.getName())
-			// isValid<typeName>(<id>)
-			validatorCall = ts.createCall(
-				validatorName,
-				[],
-				[id]
-			)
+			if (symbol.getName() === "Array") {
+				// Generic types have base type as sibling
+				// (sibling 1 is '<' token, second sibling is a SytaxList)
+				validatorCall = createArrayValidator(id, tnode.getChildAt(2).getChildAt(0))
+			} else {
+				// if it's an interface or alias, we just call the validator
+				const validatorName = ts.createIdentifier("isValid"+symbol.getName())
+				// isValid<typeName>(<id>)
+				validatorCall = ts.createCall(
+					validatorName,
+					[],
+					[id]
+				)
+			}
 		} else if (symbolIsEnum(symbol)) {
 			// It it's an enum, we call a generic enum checker with the enum type
 			const typeName = checker.symbolToEntityName(symbol, ts.SymbolFlags.Enum)
@@ -312,7 +321,6 @@ function makeMemberValidator(paramName: ts.Identifier): (member: ts.PropertySign
 /**
  * Given an interface I, creates a validator declaration that checks
  * if a given object implements I in execution time
- * TODO: refactor
  */
 function makeInterfaceValidator(inode: ts.InterfaceDeclaration): ts.FunctionDeclaration {
 	const name = inode.name.getText()
@@ -402,7 +410,8 @@ export function makeBoundaryValidators(files: string[], outputPath: string) {
 	const nodes: ts.Node[] = []
 	for (let file of program.getSourceFiles()) {
 		// Filter typescript files
-		if(files.every((x) => file.fileName.indexOf(x) === -1))
+		// If this file is not some of the input files, continue
+		if(!files.some(x => file.fileName.includes(x)))
 			continue
 
 		let imports = []
@@ -429,12 +438,23 @@ export function makeBoundaryValidators(files: string[], outputPath: string) {
 		}
 
 		if (imports.length) {
-			const aux = file.fileName.split("/")
-			// get filename without extension
-			const moduleName = aux.slice(-1)[0].split(".").slice(0, -1).join(".")
-			const op = aux.slice(0, -1).join("/")
-			const p = path.relative(outputPath, op)
-			const pre = p ? './' : '.'
+			const pathParts = file.fileName.split("/")
+			// Module name is filename without extension
+			const moduleName =
+				// Get last path part
+				pathParts.slice(-1)[0]
+				// Leave out substr after last point (extension)
+				.split(".").slice(0, -1)
+				// Get the name with points again (if any)
+				.join(".")
+
+			// Path to file without filename
+			const pathToFolder = pathParts.slice(0, -1).join("/")
+			// Get relative path from output to file folder,
+			// as we are going to create a .ts file that imports it
+			const relativePath = path.relative(outputPath, pathToFolder)
+			// Zero length string means same folder
+			const suffix = relativePath.length !== 0 ? '/' : ''
 			importNodes.push(
 				ts.createImportDeclaration(
 					undefined,
@@ -449,7 +469,7 @@ export function makeBoundaryValidators(files: string[], outputPath: string) {
 						)
 					),
 					ts.createStringLiteral(
-						pre + p + '/' + moduleName
+						'./' + relativePath + suffix + moduleName
 					)
 				)
 			)
@@ -476,8 +496,8 @@ export function createFile(nodes: ts.Node[], output: string) {
 	);
 	//TODO: refactor
 	const pre = printer.printFile(parseFile(__dirname+"/basic_validators.ts"))
-	fs.writeFileSync(output+"/validators.ts", pre+result)
-	console.log("outputting in: " + output+"/validators.ts")
+	fs.writeFileSync(output+"validators.ts", pre+result)
+	console.log("outputting in: " + output+"validators.ts")
 }
 
 /* PRINT */

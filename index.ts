@@ -31,4 +31,5 @@ Util.createFile(
 
 
 
-//Util.mapFiles(fileNames, Util.printAST)
+
+//Util.mapFiles(files, Util.printAST)

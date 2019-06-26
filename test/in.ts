@@ -16,6 +16,13 @@ export interface B {
 	a?: any
 }
 
+/**
+ * @boundary
+ */
+export interface BB {
+	b: B
+}
+
 
 export interface C {
 	str: string,
@@ -169,4 +176,11 @@ export interface P {
  */
 export interface PP {
 	a: B[][][] | N
+}
+
+/**
+ * @boundary
+ */
+export interface PPP {
+	bb: Array<BB>
 }

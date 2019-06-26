@@ -22,7 +22,7 @@ export function isValidEnumArray<T>(e: T): (data: any) => data is keyof T {
     };
 }
 import { auxauxA } from "./aux/auxinAux";
-import { A, B, D, E, F, G, H, HH, GG, GG2, GG3, I, J, JJ, K, L, M, N, O, P, PP } from "./in";
+import { A, B, BB, D, E, F, G, H, HH, GG, GG2, GG3, I, J, JJ, K, L, M, N, O, P, PP, PPP } from "./in";
 import { auxA } from "./inAux";
 export function isValidauxauxA(data: any): data is auxauxA {
     return typeof data !== "undefined" && data !== null && isValidstring(data.a);
@@ -32,6 +32,9 @@ export function isValidA(data: any): data is A {
 }
 export function isValidB(data: any): data is B {
     return typeof data !== "undefined" && data !== null && isValidstring(data.str) && (typeof data.a === "undefined" || isValidany(data.a));
+}
+export function isValidBB(data: any): data is BB {
+    return typeof data !== "undefined" && data !== null && isValidB(data.b);
 }
 export function isValidD(data: any): data is D {
     return typeof data !== "undefined" && data !== null && isValidA(data.a) && (typeof data.b === "undefined" || isValidB(data.b)) && isValidnumber(data.c);
@@ -77,6 +80,9 @@ export function isValidP(data: any): data is P {
 }
 export function isValidPP(data: any): data is PP {
     return typeof data !== "undefined" && data !== null && (Array.isArray(data.a) && data.a.every((x: any) => Array.isArray(x) && x.every((x: any) => Array.isArray(x) && x.every((x: any) => isValidB(x)))) || isValidN(data.a));
+}
+export function isValidPPP(data: any): data is PPP {
+    return typeof data !== "undefined" && data !== null && (Array.isArray(data.bb) && data.bb.every((x: any) => isValidBB(x)));
 }
 export function isValidauxA(data: any): data is auxA {
     return typeof data !== "undefined" && data !== null && isValidstring(data.a);
