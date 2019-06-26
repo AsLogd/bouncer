@@ -10,7 +10,7 @@ let output = "."
 let fileNames
 if (outputIndex > -1) {
 	fileNames = process.argv.slice(2, outputIndex)
-	output = process.argv.slice(outputIndex)[1]
+	output = process.argv.slice(outputIndex)[1] + "/"
 } else {
 	fileNames = process.argv.slice(2)
 }
