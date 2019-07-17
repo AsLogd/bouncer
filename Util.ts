@@ -150,7 +150,18 @@ function makeTypeValidator(id: ts.Expression, tnode: ts.Node): ts.Expression {
 	} else if (ts.isTypeReferenceNode(tnode)) {
 		const type = checker.getTypeAtLocation(tnode.getChildAt(0))
 		const symbol = type.getSymbol() || type.aliasSymbol
-		if (symbolIsInterface(symbol) || symbolIsAlias(symbol)) {
+
+		// TODO: there's a bug where under unknown circumstances, the symbol doesn't exist
+		if(!symbol) {
+			const validatorName = ts.createIdentifier("isValid"+tnode.getChildAt(0).getText())
+			// isValid<identifierName>(<id>)
+			validatorCall = ts.createCall(
+				validatorName,
+				[],
+				[id]
+			)
+		}
+		else if (symbolIsInterface(symbol) || symbolIsAlias(symbol)) {
 			if (symbol.getName() === "Array") {
 				// Generic types have base type as sibling
 				// (sibling 1 is '<' token, second sibling is a SytaxList)

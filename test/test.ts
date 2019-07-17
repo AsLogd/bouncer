@@ -156,8 +156,10 @@ assert(validators.isValidPP(JSON.parse(p)), "Valid interface is ivalid (type ali
 let auxA = '{"a": "str"}'
 assert(validators.isValidauxA(JSON.parse(auxA)), "Valid interface is invalid (external file)")
 
-let auxauxA = '{"a": "str"}'
 assert(validators.isValidauxauxA(JSON.parse(auxA)), "Valid interface is invalid (external file in folder)")
+
+let auxauxB = '{"a": {"a": "str"}}'
+assert(validators.isValidauxauxB(JSON.parse(auxauxB)), "Valid interface is invalid (imported member)")
 
 assert(validators.isValidD(null) === false, "Check null values")
 
