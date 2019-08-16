@@ -20,6 +20,9 @@ const files = fileNames.map(x => glob.sync(x)).reduce((pre, current) => pre.conc
 console.log("Input files:")
 files.map(x => console.log('-'+x))
 
+
+//Util.mapFiles(files, Util.printAST)
+
 // Create code file containing the basic validators
 // and the dynamically generated validators from
 // the input files
@@ -32,4 +35,4 @@ Util.createFile(
 
 
 
-//Util.mapFiles(files, Util.printAST)
+

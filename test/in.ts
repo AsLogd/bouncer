@@ -184,3 +184,15 @@ export interface PP {
 export interface PPP {
 	bb: Array<BB>
 }
+
+
+/**
+ * @boundary
+ */
+ export type Q = B[]
+
+
+/**
+ * @boundary
+ */
+ export type QQ = B[] | N

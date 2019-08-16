@@ -27,6 +27,7 @@ export function mapFiles(fileNames: string[], f: (sourceFile: ts.SourceFile) => 
 function makeTypeAliasValidator(tanode: ts.TypeAliasDeclaration): ts.FunctionDeclaration {
 	const name = tanode.name.getText()
 
+	//Validator parameter
 	const paramName = ts.createIdentifier("data");
 	const parameter = ts.createParameter(
 		/*decorators*/ undefined,
@@ -37,29 +38,19 @@ function makeTypeAliasValidator(tanode: ts.TypeAliasDeclaration): ts.FunctionDec
 		/*type*/ ts.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword)
 	);
 
-	const typeValidatorCalls: ts.Expression[] = []
-
-	tanode.type.forEachChild((child) => {
-		const type = checker.getTypeAtLocation(child)
-		const nodeType = checker.typeToTypeNode(type)
-		const name = type.aliasSymbol
-			? type.aliasSymbol.getName()
-			: type.getSymbol().getName()
-		const validatorName = ts.createIdentifier("isValid"+name)
-		const validatorCall = ts.createCall(validatorName, undefined, [paramName])
-		typeValidatorCalls.push(validatorCall)
-	})
-
+	// Children 5 is the type being assigned to the type alias
 	const statements = [ts.createReturn(
-		typeValidatorCalls.reduce(ts.createLogicalOr)
+		makeTypeValidator(paramName, tanode.getChildAt(5))
 	)]
 
+	// Type guard magic
 	const typeAliasSymbol = checker.getSymbolAtLocation(tanode.name)
 	const typeAliasType = checker.typeToTypeNode(
 		checker.getDeclaredTypeOfSymbol(typeAliasSymbol)
 	)
 	const returnType = ts.createTypePredicateNode(paramName, typeAliasType)
 
+	// Build and return validator
 	return ts.createFunctionDeclaration(
 		/*decorators*/
 		undefined,
@@ -210,101 +201,6 @@ function makeTypeValidator(id: ts.Expression, tnode: ts.Node): ts.Expression {
 	return validatorCall
 
 }
-/*
-function makeMemberValidator(paramName: ts.Identifier): (m: ts.PropertySignature) => ts.Expression {
-	return (m) => {
-		const prop = m as ts.PropertySignature
-		const memberAccess = ts.createPropertyAccess(paramName, m.name.getText())
-		const type = checker.getTypeAtLocation(prop.type)
-		const nodeType = checker.typeToTypeNode(type)
-//		const validatorCall = makeTypeValidator(memberAccess, type)
-		const validatorCall: any = null
-		const children = []
-		ts.forEachChild(m, (c) => {
-			console.log(nodeString(c))
-			console.log(c)
-		})
-
-
-		// Is the member an array?
-
-		if (ts.isArrayTypeNode(nodeType) && ts.isTypeReferenceNode(nodeType.elementType)) {
-			// Type of single element in the array
-			const elementType = (nodeType as any).elementType.typeName
-			const typeName = ts.createIdentifier(elementType.symbol.getName())
-			const arrayGlobal = ts.createIdentifier("Array")
-			const isArrayId = ts.createPropertyAccess(arrayGlobal, "isArray")
-			const everyName = ts.createIdentifier("every");
-			const everyValidator = ts.createPropertyAccess(memberAccess, everyName)
-			// Is the element type an enum?
-			if (elementType.symbol && elementType.symbol.valueDeclaration && ts.isEnumDeclaration(elementType.symbol.valueDeclaration)) {
-				validatorName = ts.createIdentifier("isValidEnumArray")
-				// data.<member>.every is defined because we know it's an array
-				// isValidEnumArray<typeof <enumId>>(<enumId>)
-				const validatorIncomplete = ts.createCall(
-					validatorName,
-					[ts.createTypeQueryNode(typeName)],
-					[typeName]
-				)
-				// data.<member> !== "undefined" && data.<member>.every(isValidEnumArray<typeof <enumId>>(<enumId>))
-				validatorCall = ts.createLogicalAnd(
-					ts.createCall(isArrayId, [], [memberAccess]),
-					ts.createCall(
-						everyValidator,
-						[],
-						[validatorIncomplete]
-					)
-				)
-			}
-			// Interface
-			else {
-				validatorName = ts.createIdentifier("isValid"+typeName.text)
-				validatorCall = ts.createLogicalAnd(
-					ts.createCall(isArrayId, [], [memberAccess]),
-					ts.createCall(
-						everyValidator,
-						[],
-						[validatorName]
-					)
-				)
-			}
-		}
-		// Non array
-		else {
-			//TODO: something wrong with single value enums
-			if (type.symbol && type.symbol.valueDeclaration && ts.isEnumDeclaration(type.symbol.valueDeclaration)) {
-				// Enum identifier (type name)
-				const enumId = ts.createIdentifier(type.symbol.name)
-				validatorName = ts.createIdentifier("isValidEnum")
-				validatorCall = ts.createCall(
-					validatorName,
-					[ts.createTypeQueryNode(enumId)],
-					[enumId, memberAccess]
-				)
-			}
-			else {
-				validatorName = ts.createIdentifier("isValid"+prop.type.getText())
-				validatorCall = ts.createCall(validatorName, undefined, [memberAccess])
-			}
-		}
-
-		if(prop.questionToken)
-		{
-			// Can't find a way to compare with undefined keyword
-			return ts.createLogicalOr(
-				ts.createStrictEquality(
-					ts.createTypeOf(memberAccess),
-					ts.createStringLiteral("undefined")
-				),
-				validatorCall
-			)
-		}
-
-		return validatorCall
-	}
-}
-*/
-
 function makeMemberValidator(paramName: ts.Identifier): (member: ts.PropertySignature) => ts.Expression {
 	return (member) => {
 		// Expression to access <member>
@@ -345,7 +241,7 @@ function makeInterfaceValidator(inode: ts.InterfaceDeclaration): ts.FunctionDecl
 		/*type*/ ts.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword)
 	);
 
-	// The interface can't be undefined nor null, we are going to check its members
+	// The interface must not be undefined nor null, we are going to check its members
 	let checkUndefined: ts.Expression = ts.createLogicalAnd(
 		ts.createStrictInequality(
 			ts.createTypeOf(paramName),

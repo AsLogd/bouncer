@@ -173,3 +173,10 @@ let nobb = '{}'
 assert(validators.isValidPPP(JSON.parse(nobb)) === false, "Invalid array generic")
 let nobb2 = '{"bb": [{"b": "a"}, {"c": 2}]}'
 assert(validators.isValidPPP(JSON.parse(nobb2)) === false, "Invalid array generic (2)")
+
+let bb = '[{"str": "a"}, {"str": "c"}]'
+assert(validators.isValidQ(JSON.parse(bb)), "Valid type alias is invalid (array)")
+assert(validators.isValidQQ(JSON.parse(bb)), "Valid type alias is invalid (union with array 1)")
+assert(validators.isValidQQ(JSON.parse(b)), "Valid type alias is invalid (union with array 2)")
+let nqq = '{"c": "c"}'
+assert(validators.isValidQQ(JSON.parse(nqq)) === false, "Invalid type alias is valid")
