@@ -84,13 +84,13 @@ function symbolIsEnum(symbol: ts.Symbol): boolean {
 	return !!(symbol.flags & ts.SymbolFlags.Enum)
 }
 
-function createArrayValidator(id: ts.Expression, baseType: ts.Node): ts.Expression {
-	// -Check array type
-	const arrayGlobal = ts.createIdentifier("Array")
-	const isArrayId = ts.createPropertyAccess(arrayGlobal, "isArray")
+/**
+ * Given an <id> to an array, validate all the items with the type <baseType>
+ */
+function createMultipleValidator(id: ts.Expression, baseType: ts.Node) {
 	// -Check that every element is of the base type
 	// 		<id>.every( x => *childValidator(x)* )
-	// 		<id>.every is defined because we know it's an array
+	// 		<id>.every is defined because we know <id> is an array
 	const everyName = ts.createIdentifier("every");
 	const everyValidator = ts.createPropertyAccess(id, everyName)
 	const paramName = ts.createIdentifier("x");
@@ -115,17 +115,25 @@ function createArrayValidator(id: ts.Expression, baseType: ts.Node): ts.Expressi
 		makeTypeValidator(paramName, baseType)
 	)
 
+	return ts.createCall(
+		everyValidator,
+		[],
+		[everyValidatorBody]
+	)
+}
+
+function createArrayValidator(id: ts.Expression, baseType: ts.Node): ts.Expression {
+	// -Check array type
+	const arrayGlobal = ts.createIdentifier("Array")
+	const isArrayId = ts.createPropertyAccess(arrayGlobal, "isArray")
+
 	return ts.createLogicalAnd(
 		ts.createCall(
 			isArrayId,
 			[],
 			[id]
 		),
-		ts.createCall(
-			everyValidator,
-			[],
-			[everyValidatorBody]
-		)
+		createMultipleValidator(id, baseType)
 	)
 }
 /**
@@ -164,23 +172,42 @@ const createTypeLiteralValidator: (id: ts.Expression, tnode: ts.TypeLiteralNode)
  */
 function makeMemberValidator(paramName: ts.Expression): (member: ts.PropertySignature) => ts.Expression {
 	return (member) => {
-		// Expression to access <member>
-		let memberAccess = ts.createPropertyAccess(paramName, member.name.getText())
-		// Expression that validates the member's type
-		let validatorCall = makeTypeValidator(memberAccess, member.type)
-
-		// undefined is a valid value in optional members
-		if(member.questionToken)
-		{
-			validatorCall = ts.createLogicalOr(
-				ts.createStrictEquality(
-					ts.createTypeOf(memberAccess),
-					// Can't find a way to compare with undefined keyword
-					ts.createStringLiteral("undefined")
-				),
-				validatorCall
+		let validatorCall
+		// If index signature is present, its type is the union of all the members' types
+		// This means that validating all the properties with the index signature type won't fail
+		if (ts.isIndexSignatureDeclaration(member)) {
+			// Get all object values
+			const objectGlobal = ts.createIdentifier("Object")
+			const valuesMember = ts.createPropertyAccess(objectGlobal, "values")
+			const valuesCall = ts.createCall(
+				valuesMember,
+				[],
+				[paramName]
 			)
+			// Validate all values with the index signature type
+			validatorCall = createMultipleValidator(valuesCall, member.type)
+		} else {
+			// Even if we have an index signature, validating each member makes stricter validation
+
+			// Expression to access <member>
+			let memberAccess = ts.createPropertyAccess(paramName, member.name.getText())
+			// Expression that validates the member's type
+			validatorCall = makeTypeValidator(memberAccess, member.type)
+
+			// undefined is a valid value in optional members
+			if(member.questionToken)
+			{
+				validatorCall = ts.createLogicalOr(
+					ts.createStrictEquality(
+						ts.createTypeOf(memberAccess),
+						// Can't find a way to compare with undefined keyword
+						ts.createStringLiteral("undefined")
+					),
+					validatorCall
+				)
+			}
 		}
+
 
 		return validatorCall
 	}

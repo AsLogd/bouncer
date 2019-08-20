@@ -181,14 +181,26 @@ assert(validators.isValidQQ(JSON.parse(b)), "Valid type alias is invalid (union 
 let nqq = '{"c": "c"}'
 assert(validators.isValidQQ(JSON.parse(nqq)) === false, "Invalid type alias is valid")
 
-let r = '{"map": {"str": "a"}}'
+let r = '{"l": {"str": "a"}}'
 assert(validators.isValidR(JSON.parse(r)), "Valid interface is invalid (object literal member)")
-let r2 = '{"map": 3}'
+let r2 = '{"l": 3}'
 assert(validators.isValidR(JSON.parse(r2)) === false, "Invalid interface is valid (object literal member)")
 
-let rr = '{"map": {"b": {"str": "a"}, "str": "o"}}'
+let rr = '{"l": {"b": {"str": "a"}, "str": "o"}}'
 assert(validators.isValidRR(JSON.parse(rr)), "Valid interface is invalid (object literal member misc)")
-let rr2 = '{"map": {"b": {"str": "a"}, "str": 2}}'
+let rr2 = '{"l": {"b": {"str": "a"}, "str": 2}}'
 assert(validators.isValidRR(JSON.parse(rr2)) === false, "Invalid interface is valid (object literal member misc2)")
-let rr3 = '{"map": {"a": {"str": "s", "num": 2, "bool": true, "a": 0}}}'
+let rr3 = '{"l": {"a": {"str": "s", "num": 2, "bool": true, "a": 0}}}'
 assert(validators.isValidRR(JSON.parse(rr3)), "Valid interface is invalid (object literal member misc3)")
+
+let s = '{"m": {"testkey": {"str": "s"}, "testkey2": {"str": "s2"}}}'
+assert(validators.isValidS(JSON.parse(s)), "Valid interface is invalid (map member)")
+s = '{"m": {"testkey": {"str": "s"}, "testkey2": {"stfr": "s2"}}}'
+assert(validators.isValidS(JSON.parse(s)) === false, "Invalid interface is valid (map member)")
+
+let ss = '{"m": {"testkey": {"a": "a"}, "testkey2": {"b": "b"}, "a": {"a": "a"}, "b": {"b": "b"}}}'
+assert(validators.isValidSS(JSON.parse(ss)), "Valid interface is invalid (map member misc)")
+ss = '{"m": {"testkey": {"c": "a"}, "testkey2": {"b": "b"}, "a": {"a": "a"}, "b": {"b": "b"}}}'
+assert(validators.isValidSS(JSON.parse(ss)) === false, "Invalid interface is valid (map member misc)")
+ss = '{"m": {"testkey": {"a": "a"}, "testkey2": {"b": "b"}, "a": {"b": "a"}, "b": {"b": "b"}}}'
+assert(validators.isValidSS(JSON.parse(ss)) === false, "Invalid interface is valid (map member misc 2)")

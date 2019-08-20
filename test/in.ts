@@ -219,3 +219,23 @@ export interface RR {
 	}
 }
 
+
+/**
+ * @boundary
+ */
+export interface S {
+	m: {
+		[key: string]: B
+	}
+}
+
+/**
+ * @boundary
+ */
+export interface SS {
+	m: {
+		a: {a: string}
+		b: {b: string}
+		[key: string]: {a: string} | {b: string}
+	}
+}

@@ -23,7 +23,7 @@ export function isValidEnumArray<T>(e: T): (data: any) => data is keyof T {
 }
 import { auxA } from "./inAux";
 import { auxauxA, auxauxB } from "./aux/auxinAux";
-import { A, B, BB, D, E, F, G, H, HH, GG, GG2, GG3, I, J, JJ, K, L, M, N, O, P, PP, PPP, Q, QQ, R, RR } from "./in";
+import { A, B, BB, D, E, F, G, H, HH, GG, GG2, GG3, I, J, JJ, K, L, M, N, O, P, PP, PPP, Q, QQ, R, RR, S, SS } from "./in";
 export function isValidauxA(data: any): data is auxA {
     return typeof data !== "undefined" && data !== null && isValidstring(data.a);
 }
@@ -97,8 +97,14 @@ export function isValidQQ(data: any): data is QQ {
     return Array.isArray(data) && data.every((x: any) => isValidB(x)) || isValidN(data);
 }
 export function isValidR(data: any): data is R {
-    return typeof data !== "undefined" && data !== null && (typeof data.map !== "undefined" && data.map !== null && isValidstring(data.map.str));
+    return typeof data !== "undefined" && data !== null && (typeof data.l !== "undefined" && data.l !== null && isValidstring(data.l.str));
 }
 export function isValidRR(data: any): data is RR {
-    return typeof data !== "undefined" && data !== null && (typeof data.map !== "undefined" && data.map !== null && isValidB(data.map.b) && (typeof data.map.str === "undefined" || isValidstring(data.map.str)) || typeof data.map !== "undefined" && data.map !== null && isValidA(data.map.a));
+    return typeof data !== "undefined" && data !== null && (typeof data.l !== "undefined" && data.l !== null && isValidB(data.l.b) && (typeof data.l.str === "undefined" || isValidstring(data.l.str)) || typeof data.l !== "undefined" && data.l !== null && isValidA(data.l.a));
+}
+export function isValidS(data: any): data is S {
+    return typeof data !== "undefined" && data !== null && (typeof data.m !== "undefined" && data.m !== null && Object.values(data.m).every((x: any) => isValidB(x)));
+}
+export function isValidSS(data: any): data is SS {
+    return typeof data !== "undefined" && data !== null && (typeof data.m !== "undefined" && data.m !== null && (typeof data.m.a !== "undefined" && data.m.a !== null && isValidstring(data.m.a.a)) && (typeof data.m.b !== "undefined" && data.m.b !== null && isValidstring(data.m.b.b)) && Object.values(data.m).every((x: any) => typeof x !== "undefined" && x !== null && isValidstring(x.a) || typeof x !== "undefined" && x !== null && isValidstring(x.b)));
 }
