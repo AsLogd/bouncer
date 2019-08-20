@@ -128,6 +128,63 @@ function createArrayValidator(id: ts.Expression, baseType: ts.Node): ts.Expressi
 		)
 	)
 }
+/**
+ * Makes an expression to validate a node's members
+ */
+function createNodeMembersValidator(id: ts.Expression, tnode: ts.TypeLiteralNode | ts.InterfaceDeclaration): ts.Expression {
+	// must not be undefined nor null, we are going to check its members
+	let checkUndefined: ts.Expression = ts.createLogicalAnd(
+		ts.createStrictInequality(
+			ts.createTypeOf(id),
+			ts.createStringLiteral("undefined")
+		),
+		ts.createStrictInequality(
+			id,
+			ts.createNull()
+		)
+	)
+
+	// List of expressions that validate each member
+	const memberValidatorCalls: ts.Expression[] = tnode.members.map(
+		makeMemberValidator(id)
+	)
+
+	// First check undefined
+	memberValidatorCalls.unshift(checkUndefined)
+
+	// All expressions must be true for the interface to be valid
+	return memberValidatorCalls.reduce(ts.createLogicalAnd)
+}
+const createTypeLiteralValidator: (id: ts.Expression, tnode: ts.TypeLiteralNode) => ts.Expression = createNodeMembersValidator
+
+/**
+ * Given the expression to access an object,
+ * returns a function that, given a object member signature,
+ * returns an expression that validates that member
+ */
+function makeMemberValidator(paramName: ts.Expression): (member: ts.PropertySignature) => ts.Expression {
+	return (member) => {
+		// Expression to access <member>
+		let memberAccess = ts.createPropertyAccess(paramName, member.name.getText())
+		// Expression that validates the member's type
+		let validatorCall = makeTypeValidator(memberAccess, member.type)
+
+		// undefined is a valid value in optional members
+		if(member.questionToken)
+		{
+			validatorCall = ts.createLogicalOr(
+				ts.createStrictEquality(
+					ts.createTypeOf(memberAccess),
+					// Can't find a way to compare with undefined keyword
+					ts.createStringLiteral("undefined")
+				),
+				validatorCall
+			)
+		}
+
+		return validatorCall
+	}
+}
 
 function makeTypeValidator(id: ts.Expression, tnode: ts.Node): ts.Expression {
 	// In case of unhandled type
@@ -138,6 +195,8 @@ function makeTypeValidator(id: ts.Expression, tnode: ts.Node): ts.Expression {
 		// Array type first child is base type
 		validatorCall = createArrayValidator(id, tnode.getChildAt(0))
 
+	} else if(ts.isTypeLiteralNode(tnode)) {
+		validatorCall = createTypeLiteralValidator(id, tnode)
 	} else if (ts.isTypeReferenceNode(tnode)) {
 		const type = checker.getTypeAtLocation(tnode.getChildAt(0))
 		const symbol = type.getSymbol() || type.aliasSymbol
@@ -201,29 +260,7 @@ function makeTypeValidator(id: ts.Expression, tnode: ts.Node): ts.Expression {
 	return validatorCall
 
 }
-function makeMemberValidator(paramName: ts.Identifier): (member: ts.PropertySignature) => ts.Expression {
-	return (member) => {
-		// Expression to access <member>
-		let memberAccess = ts.createPropertyAccess(paramName, member.name.getText())
-		// Expression that validates the member's type
-		let validatorCall = makeTypeValidator(memberAccess, member.type)
 
-		// undefined is a valid value in optional members
-		if(member.questionToken)
-		{
-			validatorCall = ts.createLogicalOr(
-				ts.createStrictEquality(
-					ts.createTypeOf(memberAccess),
-					// Can't find a way to compare with undefined keyword
-					ts.createStringLiteral("undefined")
-				),
-				validatorCall
-			)
-		}
-
-		return validatorCall
-	}
-}
 
 /**
  * Given an interface I, creates a validator declaration that checks
@@ -241,29 +278,9 @@ function makeInterfaceValidator(inode: ts.InterfaceDeclaration): ts.FunctionDecl
 		/*type*/ ts.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword)
 	);
 
-	// The interface must not be undefined nor null, we are going to check its members
-	let checkUndefined: ts.Expression = ts.createLogicalAnd(
-		ts.createStrictInequality(
-			ts.createTypeOf(paramName),
-			ts.createStringLiteral("undefined")
-		),
-		ts.createStrictInequality(
-			paramName,
-			ts.createNull()
-		)
-	)
-
-	// List of expressions that validate each member
-	const memberValidatorCalls: ts.Expression[] = inode.members.map(
-		makeMemberValidator(paramName)
-	)
-
-	// First check undefined
-	memberValidatorCalls.unshift(checkUndefined)
-
-	// All expressions must be true for the interface to be valid
+	// All members must be valid for the interface to be valid
 	const statements = [ts.createReturn(
-		memberValidatorCalls.reduce(ts.createLogicalAnd)
+		createNodeMembersValidator(paramName, inode)
 	)]
 
 	// Return typescript "is" magic

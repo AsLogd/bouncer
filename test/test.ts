@@ -180,3 +180,15 @@ assert(validators.isValidQQ(JSON.parse(bb)), "Valid type alias is invalid (union
 assert(validators.isValidQQ(JSON.parse(b)), "Valid type alias is invalid (union with array 2)")
 let nqq = '{"c": "c"}'
 assert(validators.isValidQQ(JSON.parse(nqq)) === false, "Invalid type alias is valid")
+
+let r = '{"map": {"str": "a"}}'
+assert(validators.isValidR(JSON.parse(r)), "Valid interface is invalid (object literal member)")
+let r2 = '{"map": 3}'
+assert(validators.isValidR(JSON.parse(r2)) === false, "Invalid interface is valid (object literal member)")
+
+let rr = '{"map": {"b": {"str": "a"}, "str": "o"}}'
+assert(validators.isValidRR(JSON.parse(rr)), "Valid interface is invalid (object literal member misc)")
+let rr2 = '{"map": {"b": {"str": "a"}, "str": 2}}'
+assert(validators.isValidRR(JSON.parse(rr2)) === false, "Invalid interface is valid (object literal member misc2)")
+let rr3 = '{"map": {"a": {"str": "s", "num": 2, "bool": true, "a": 0}}}'
+assert(validators.isValidRR(JSON.parse(rr3)), "Valid interface is invalid (object literal member misc3)")

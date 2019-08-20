@@ -189,10 +189,33 @@ export interface PPP {
 /**
  * @boundary
  */
- export type Q = B[]
+export type Q = B[]
 
 
 /**
  * @boundary
  */
- export type QQ = B[] | N
+export type QQ = B[] | N
+
+
+/**
+ * @boundary
+ */
+export interface R {
+	l: {
+		str: string
+	}
+}
+
+/**
+ * @boundary
+ */
+export interface RR {
+	l: {
+		b: B,
+		str?: string
+	} | {
+		a: A
+	}
+}
+
