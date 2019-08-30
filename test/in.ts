@@ -239,3 +239,17 @@ export interface SS {
 		[key: string]: {a: string} | {b: string}
 	}
 }
+
+/**
+ * @boundary
+ */
+export interface T extends B{
+	num: number
+}
+
+/**
+ * @boundary
+ */
+export interface TT extends B, S{
+	num: number
+}

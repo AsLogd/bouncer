@@ -16,6 +16,9 @@ export function parseFile(fileName: string) {
 	);
 }
 
+function flatten(arr: any[]) {
+	return arr.reduce((flatten, arr) => [...flatten, ...arr])
+}
 
 /**
  * Maps the input files with function f
@@ -136,6 +139,24 @@ function createArrayValidator(id: ts.Expression, baseType: ts.Node): ts.Expressi
 		createMultipleValidator(id, baseType)
 	)
 }
+
+function createNodeHeritagesValidator(id: ts.Expression, inode: ts.InterfaceDeclaration): ts.Expression {
+	return flatten(
+			// For every heritage clause (extends, implements)
+			inode.heritageClauses.map(clause =>
+				// For every type in the clause
+				clause.types.map(type =>
+					// In this case, we know <inode> is more than just <type>
+					// so we ignore the type guard by asserting type any
+					ts.createTypeAssertion(
+						ts.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword),
+						makeTypeValidator(id, type)
+					)
+				)
+			)
+		).reduce(ts.createLogicalAnd)
+}
+
 /**
  * Makes an expression to validate a node's members
  */
@@ -164,6 +185,8 @@ function createNodeMembersValidator(id: ts.Expression, tnode: ts.TypeLiteralNode
 	return memberValidatorCalls.reduce(ts.createLogicalAnd)
 }
 const createTypeLiteralValidator: (id: ts.Expression, tnode: ts.TypeLiteralNode) => ts.Expression = createNodeMembersValidator
+
+
 
 /**
  * Given the expression to access an object,
@@ -282,6 +305,14 @@ function makeTypeValidator(id: ts.Expression, tnode: ts.Node): ts.Expression {
 			[],
 			[id]
 		)
+	} else if (ts.isExpressionWithTypeArguments(tnode)) {
+		const validatorName = ts.createIdentifier("isValid"+tnode.getChildAt(0).getText())
+		// isValid<identifierName>(<id>)
+		validatorCall = ts.createCall(
+			validatorName,
+			[],
+			[id]
+		)
 	}
 
 	return validatorCall
@@ -304,11 +335,24 @@ function makeInterfaceValidator(inode: ts.InterfaceDeclaration): ts.FunctionDecl
 		/*questionToken*/ undefined,
 		/*type*/ ts.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword)
 	);
+	let expression: ts.Expression
 
-	// All members must be valid for the interface to be valid
-	const statements = [ts.createReturn(
-		createNodeMembersValidator(paramName, inode)
-	)]
+	// The interface has heritage
+	if(inode.heritageClauses) {
+		expression = ts.createLogicalAnd(
+			// Has to validate parent types
+			createNodeHeritagesValidator(paramName, inode),
+			// All members must be valid for the interface to be valid
+			createNodeMembersValidator(paramName, inode)
+		)
+	} else {
+		// Doesn't have heritage
+		// All members must be valid for the interface to be valid
+		expression = createNodeMembersValidator(paramName, inode)
+	}
+
+	const statements: ts.Statement[] = [ts.createReturn(expression)]
+
 
 	// Return typescript "is" magic
 	// This makes the typescript compiler know the type of the data

@@ -204,3 +204,15 @@ ss = '{"m": {"testkey": {"c": "a"}, "testkey2": {"b": "b"}, "a": {"a": "a"}, "b"
 assert(validators.isValidSS(JSON.parse(ss)) === false, "Invalid interface is valid (map member misc)")
 ss = '{"m": {"testkey": {"a": "a"}, "testkey2": {"b": "b"}, "a": {"b": "a"}, "b": {"b": "b"}}}'
 assert(validators.isValidSS(JSON.parse(ss)) === false, "Invalid interface is valid (map member misc 2)")
+
+let t = '{"str": "a", "num": 2}'
+assert(validators.isValidT(JSON.parse(t)), "Valid interface is invalid (interface extends)")
+t = '{"num": 2}'
+assert(validators.isValidT(JSON.parse(t)) === false, "Invalid interface is valid (interface extends)")
+
+let tt = '{"str": "a", "num": 2, "m": {"testkey": {"str": "s"}, "testkey2": {"str": "s2"}}}'
+assert(validators.isValidTT(JSON.parse(tt)), "Valid interface is invalid (interface extends multiple)")
+tt = '{"num": 2, "m": {"testkey": {"a": "a"}, "testkey2": {"b": "b"}, "a": {"a": "a"}, "b": {"b": "b"}}}'
+assert(validators.isValidTT(JSON.parse(tt)) === false, "Invalid interface is valid (interface extends multiple 1)")
+tt = '{"str": "a", "num": 2}'
+assert(validators.isValidTT(JSON.parse(tt)) === false, "Invalid interface is valid (interface extends multiple 2)")

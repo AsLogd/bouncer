@@ -23,7 +23,7 @@ export function isValidEnumArray<T>(e: T): (data: any) => data is keyof T {
 }
 import { auxA } from "./inAux";
 import { auxauxA, auxauxB } from "./aux/auxinAux";
-import { A, B, BB, D, E, F, G, H, HH, GG, GG2, GG3, I, J, JJ, K, L, M, N, O, P, PP, PPP, Q, QQ, R, RR, S, SS } from "./in";
+import { A, B, BB, D, E, F, G, H, HH, GG, GG2, GG3, I, J, JJ, K, L, M, N, O, P, PP, PPP, Q, QQ, R, RR, S, SS, T, TT } from "./in";
 export function isValidauxA(data: any): data is auxA {
     return typeof data !== "undefined" && data !== null && isValidstring(data.a);
 }
@@ -107,4 +107,10 @@ export function isValidS(data: any): data is S {
 }
 export function isValidSS(data: any): data is SS {
     return typeof data !== "undefined" && data !== null && (typeof data.m !== "undefined" && data.m !== null && (typeof data.m.a !== "undefined" && data.m.a !== null && isValidstring(data.m.a.a)) && (typeof data.m.b !== "undefined" && data.m.b !== null && isValidstring(data.m.b.b)) && Object.values(data.m).every((x: any) => typeof x !== "undefined" && x !== null && isValidstring(x.a) || typeof x !== "undefined" && x !== null && isValidstring(x.b)));
+}
+export function isValidT(data: any): data is T {
+    return (<any>isValidB(data)) && (typeof data !== "undefined" && data !== null && isValidnumber(data.num));
+}
+export function isValidTT(data: any): data is TT {
+    return (<any>isValidB(data)) && (<any>isValidS(data)) && (typeof data !== "undefined" && data !== null && isValidnumber(data.num));
 }
