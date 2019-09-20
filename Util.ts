@@ -197,7 +197,8 @@ function makeMemberValidator(paramName: ts.Expression): (member: ts.PropertySign
 	return (member) => {
 		let validatorCall
 		// If index signature is present, its type is the union of all the members' types
-		// This means that validating all the properties with the index signature type won't fail
+		// This means that validating all the properties with the associated type won't fail
+		// Also, we don't check for the index type because on the boundary we can only have string indexes (JSON)
 		if (ts.isIndexSignatureDeclaration(member)) {
 			// Get all object values
 			const objectGlobal = ts.createIdentifier("Object")
@@ -210,7 +211,9 @@ function makeMemberValidator(paramName: ts.Expression): (member: ts.PropertySign
 			// Validate all values with the index signature type
 			validatorCall = createMultipleValidator(valuesCall, member.type)
 		} else {
-			// Even if we have an index signature, validating each member makes stricter validation
+			// Even if we have an index signature, validating each member separately makes stricter validation
+			// (i.e. the case of an interface with an index signature member with other explicit members,
+			//  which could have narrower type)
 
 			// Expression to access <member>
 			let memberAccess = ts.createPropertyAccess(paramName, member.name.getText())
@@ -312,6 +315,31 @@ function makeTypeValidator(id: ts.Expression, tnode: ts.Node): ts.Expression {
 			validatorName,
 			[],
 			[id]
+		)
+	}
+	else if(ts.isMappedTypeNode(tnode)) {
+		// -validate all properties with the index type
+		// -validate all values with the associated type
+		const objectGlobal = ts.createIdentifier("Object")
+		const keysMember = ts.createPropertyAccess(objectGlobal, "keys")
+		const keysCall = ts.createCall(
+			keysMember,
+			[],
+			[id]
+		)
+		const valuesMember = ts.createPropertyAccess(objectGlobal, "values")
+		const valuesCall = ts.createCall(
+			valuesMember,
+			[],
+			[id]
+		)
+
+		const keyType = tnode.typeParameter.getChildAt(2)
+		validatorCall = ts.createLogicalAnd(
+			// -validate all keys with the index type
+			createMultipleValidator(keysCall, keyType),
+			// -validate all values with the type
+			createMultipleValidator(valuesCall, tnode.type)
 		)
 	}
 

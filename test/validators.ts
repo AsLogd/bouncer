@@ -23,7 +23,7 @@ export function isValidEnumArray<T>(e: T): (data: any) => data is keyof T {
 }
 import { auxA } from "./inAux";
 import { auxauxA, auxauxB } from "./aux/auxinAux";
-import { A, B, BB, D, E, F, G, H, HH, GG, GG2, GG3, I, J, JJ, K, L, M, N, O, P, PP, PPP, Q, QQ, R, RR, S, SS, T, TT } from "./in";
+import { A, B, BB, D, E, F, G, H, HH, GG, GG2, GG3, I, J, JJ, K, L, M, N, O, P, PP, PPP, Q, QQ, R, RR, S, SS, T, TT, U, UU } from "./in";
 export function isValidauxA(data: any): data is auxA {
     return typeof data !== "undefined" && data !== null && isValidstring(data.a);
 }
@@ -113,4 +113,10 @@ export function isValidT(data: any): data is T {
 }
 export function isValidTT(data: any): data is TT {
     return (<any>isValidB(data)) && (<any>isValidS(data)) && (typeof data !== "undefined" && data !== null && isValidnumber(data.num));
+}
+export function isValidU(data: any): data is U {
+    return typeof data !== "undefined" && data !== null && (Object.keys(data.d).every((x: any) => isValidEnum<typeof G>(G, x)) && Object.values(data.d).every((x: any) => isValidnumber(x)));
+}
+export function isValidUU(data: any): data is UU {
+    return typeof data !== "undefined" && data !== null && (Object.keys(data.d).every((x: any) => isValidEnum<typeof GG2>(GG2, x)) && Object.values(data.d).every((x: any) => isValidstring(x)));
 }

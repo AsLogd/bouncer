@@ -205,6 +205,7 @@ assert(validators.isValidSS(JSON.parse(ss)) === false, "Invalid interface is val
 ss = '{"m": {"testkey": {"a": "a"}, "testkey2": {"b": "b"}, "a": {"b": "a"}, "b": {"b": "b"}}}'
 assert(validators.isValidSS(JSON.parse(ss)) === false, "Invalid interface is valid (map member misc 2)")
 
+
 let t = '{"str": "a", "num": 2}'
 assert(validators.isValidT(JSON.parse(t)), "Valid interface is invalid (interface extends)")
 t = '{"num": 2}'
@@ -216,3 +217,13 @@ tt = '{"num": 2, "m": {"testkey": {"a": "a"}, "testkey2": {"b": "b"}, "a": {"a":
 assert(validators.isValidTT(JSON.parse(tt)) === false, "Invalid interface is valid (interface extends multiple 1)")
 tt = '{"str": "a", "num": 2}'
 assert(validators.isValidTT(JSON.parse(tt)) === false, "Invalid interface is valid (interface extends multiple 2)")
+
+
+let uu = '{"d": {"A": "a", "B": "b"}}'
+assert(validators.isValidUU(JSON.parse(uu)), "Valid interface is invalid (string enum index)")
+
+uu = '{"d": {"A": "a", "B": "b", "H": "h"}}'
+assert(validators.isValidUU(JSON.parse(uu)), "Valid interface is invalid (string enum index, key and values)")
+
+uu = '{"d": {"A": "a", "B": "b", "Z": "z"}}'
+assert(validators.isValidUU(JSON.parse(uu)) === false, "Invalid interface is valid (string enum index)")

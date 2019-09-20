@@ -240,6 +240,7 @@ export interface SS {
 	}
 }
 
+
 /**
  * @boundary
  */
@@ -252,4 +253,18 @@ export interface T extends B{
  */
 export interface TT extends B, S{
 	num: number
+}
+
+/**
+ * @boundary
+ */
+export interface U {
+	d: {[key in G]: number}
+}
+
+/**
+ * @boundary
+ */
+export interface UU {
+	d: {[key in GG2]: string}
 }
